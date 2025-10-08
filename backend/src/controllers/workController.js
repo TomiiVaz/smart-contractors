@@ -7,6 +7,45 @@ const authMiddleware = require('../middleware/authMiddleware');
  * @swagger
  * components:
  *   schemas:
+ *     Work:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: integer
+ *           description: ID único del trabajo
+ *         clientAddress:
+ *           type: string
+ *           description: Dirección de wallet del cliente
+ *         workerAddress:
+ *           type: string
+ *           description: Dirección de wallet del trabajador
+ *         amount:
+ *           type: number
+ *           description: Cantidad en USDC
+ *         title:
+ *           type: string
+ *           description: Título del trabajo
+ *         description:
+ *           type: string
+ *           description: Descripción del trabajo
+ *         status:
+ *           type: integer
+ *           description: Estado del trabajo (0-Created, 1-InProgress, 2-Submitted, 3-Completed, 4-Cancelled)
+ *         createdAt:
+ *           type: integer
+ *           description: Timestamp de creación
+ *         deadline:
+ *           type: integer
+ *           description: Timestamp límite
+ *         deliveryData:
+ *           type: string
+ *           description: Datos de entrega
+ *         blockchainWorkId:
+ *           type: string
+ *           description: ID del trabajo en blockchain
+ *         transactionHash:
+ *           type: string
+ *           description: Hash de la transacción
  *     CreateWorkRequest:
  *       type: object
  *       required:
@@ -36,6 +75,88 @@ const authMiddleware = require('../middleware/authMiddleware');
  *           type: integer
  *           description: Timestamp límite
  *           example: 1704067200
+ *     AcceptWorkRequest:
+ *       type: object
+ *       required:
+ *         - workerId
+ *       properties:
+ *         workerId:
+ *           type: integer
+ *           description: ID del trabajador que acepta el trabajo
+ *           example: 2
+ *     SubmitWorkRequest:
+ *       type: object
+ *       required:
+ *         - deliveryData
+ *         - workerId
+ *       properties:
+ *         deliveryData:
+ *           type: string
+ *           description: Datos de entrega del trabajo
+ *           example: "https://github.com/usuario/proyecto-completado"
+ *         workerId:
+ *           type: integer
+ *           description: ID del trabajador que entrega
+ *           example: 2
+ *     ApproveWorkRequest:
+ *       type: object
+ *       required:
+ *         - clientId
+ *       properties:
+ *         clientId:
+ *           type: integer
+ *           description: ID del cliente que aprueba
+ *           example: 1
+ *     CancelWorkRequest:
+ *       type: object
+ *       required:
+ *         - clientId
+ *       properties:
+ *         clientId:
+ *           type: integer
+ *           description: ID del cliente que cancela
+ *           example: 1
+ *     ApproveUSDCRequest:
+ *       type: object
+ *       required:
+ *         - spender
+ *         - amount
+ *       properties:
+ *         spender:
+ *           type: string
+ *           description: Dirección que puede gastar USDC
+ *           example: "0x1234567890abcdef1234567890abcdef12345678"
+ *         amount:
+ *           type: string
+ *           description: Cantidad a aprobar
+ *           example: "1000.00"
+ *     Success:
+ *       type: object
+ *       properties:
+ *         success:
+ *           type: boolean
+ *           example: true
+ *         message:
+ *           type: string
+ *           description: Mensaje de éxito
+ *         data:
+ *           type: object
+ *           description: Datos de respuesta
+ *     Error:
+ *       type: object
+ *       properties:
+ *         success:
+ *           type: boolean
+ *           example: false
+ *         error:
+ *           type: string
+ *           description: Mensaje de error
+ *     Balance:
+ *       type: object
+ *       properties:
+ *         balance:
+ *           type: string
+ *           description: Balance en USDC
  */
 
 /**
@@ -183,7 +304,46 @@ router.get('/', async (req, res) => {
   }
 });
 
-// GET /works/:id - Obtener trabajo por ID
+/**
+ * @swagger
+ * /works/{id}:
+ *   get:
+ *     summary: Obtener trabajo por ID
+ *     description: Obtiene los detalles de un trabajo específico
+ *     tags: [Trabajos]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID del trabajo
+ *         example: 1
+ *     responses:
+ *       200:
+ *         description: Trabajo encontrado
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   $ref: '#/components/schemas/Work'
+ *       404:
+ *         description: Trabajo no encontrado
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       400:
+ *         description: ID inválido
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.get('/:id', async (req, res) => {
   try {
     const workId = parseInt(req.params.id);
@@ -212,11 +372,46 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// GET /works/client/:id - Obtener trabajos por cliente
+/**
+ * @swagger
+ * /works/client/{id}:
+ *   get:
+ *     summary: Obtener trabajos por cliente
+ *     description: Obtiene todos los trabajos de un cliente específico
+ *     tags: [Trabajos]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID del cliente
+ *         example: 1
+ *     responses:
+ *       200:
+ *         description: Lista de trabajos del cliente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Work'
+ *       400:
+ *         description: ID de cliente inválido
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.get('/client/:id', async (req, res) => {
   try {
     const clientId = parseInt(req.params.id);
-    
+
     if (isNaN(clientId)) {
       return res.status(400).json({ error: 'Invalid client ID' });
     }
@@ -235,11 +430,46 @@ router.get('/client/:id', async (req, res) => {
   }
 });
 
-// GET /works/worker/:id - Obtener trabajos por worker
+/**
+ * @swagger
+ * /works/worker/{id}:
+ *   get:
+ *     summary: Obtener trabajos por trabajador
+ *     description: Obtiene todos los trabajos de un trabajador específico
+ *     tags: [Trabajos]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID del trabajador
+ *         example: 2
+ *     responses:
+ *       200:
+ *         description: Lista de trabajos del trabajador
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Work'
+ *       400:
+ *         description: ID de trabajador inválido
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.get('/worker/:id', async (req, res) => {
   try {
     const workerId = parseInt(req.params.id);
-    
+
     if (isNaN(workerId)) {
       return res.status(400).json({ error: 'Invalid worker ID' });
     }
@@ -332,7 +562,52 @@ router.post('/:id/accept', authMiddleware, async (req, res) => {
   }
 });
 
-// POST /works/:id/submit - Entregar trabajo
+/**
+ * @swagger
+ * /works/{id}/submit:
+ *   post:
+ *     summary: Entregar trabajo
+ *     description: Permite a un trabajador entregar un trabajo completado
+ *     tags: [Trabajos]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID del trabajo
+ *         example: 1
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/SubmitWorkRequest'
+ *           example:
+ *             deliveryData: "https://github.com/usuario/proyecto-completado"
+ *             workerId: 2
+ *     responses:
+ *       200:
+ *         description: Trabajo entregado exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Success'
+ *       400:
+ *         description: Error de validación
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: No autorizado
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.post('/:id/submit', authMiddleware, async (req, res) => {
   try {
     const workId = parseInt(req.params.id);
@@ -366,7 +641,51 @@ router.post('/:id/submit', authMiddleware, async (req, res) => {
   }
 });
 
-// POST /works/:id/approve - Aprobar trabajo
+/**
+ * @swagger
+ * /works/{id}/approve:
+ *   post:
+ *     summary: Aprobar trabajo
+ *     description: Permite a un cliente aprobar un trabajo entregado
+ *     tags: [Trabajos]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID del trabajo
+ *         example: 1
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/ApproveWorkRequest'
+ *           example:
+ *             clientId: 1
+ *     responses:
+ *       200:
+ *         description: Trabajo aprobado exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Success'
+ *       400:
+ *         description: Error de validación
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: No autorizado
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.post('/:id/approve', authMiddleware, async (req, res) => {
   try {
     const workId = parseInt(req.params.id);
@@ -396,7 +715,51 @@ router.post('/:id/approve', authMiddleware, async (req, res) => {
   }
 });
 
-// POST /works/:id/cancel - Cancelar trabajo
+/**
+ * @swagger
+ * /works/{id}/cancel:
+ *   post:
+ *     summary: Cancelar trabajo
+ *     description: Permite a un cliente cancelar un trabajo
+ *     tags: [Trabajos]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID del trabajo
+ *         example: 1
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/CancelWorkRequest'
+ *           example:
+ *             clientId: 1
+ *     responses:
+ *       200:
+ *         description: Trabajo cancelado exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Success'
+ *       400:
+ *         description: Error de validación
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: No autorizado
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.post('/:id/cancel', authMiddleware, async (req, res) => {
   try {
     const workId = parseInt(req.params.id);
@@ -489,7 +852,36 @@ router.get('/balance/:address', async (req, res) => {
   }
 });
 
-// POST /works/approve - Aprobar gasto USDC
+/**
+ * @swagger
+ * /works/approve:
+ *   post:
+ *     summary: Aprobar gasto USDC
+ *     description: Aprueba el gasto de USDC para un contrato específico
+ *     tags: [Blockchain]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/ApproveUSDCRequest'
+ *           example:
+ *             spender: "0x1234567890abcdef1234567890abcdef12345678"
+ *             amount: "1000.00"
+ *     responses:
+ *       200:
+ *         description: Aprobación realizada exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Success'
+ *       400:
+ *         description: Error de validación
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.post('/approve', async (req, res) => {
   try {
     const { spender, amount } = req.body;
@@ -600,7 +992,7 @@ router.get('/health', (req, res) => {
 router.get('/health/detailed', async (req, res) => {
   try {
     const blockchainStatus = await workService.checkBlockchainConnection();
-    
+
     res.json({
       success: true,
       status: "healthy",

@@ -4,6 +4,53 @@ const userService = require('../services/userService');
 
 /**
  * @swagger
+ * components:
+ *   schemas:
+ *     User:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: integer
+ *           description: ID único del usuario
+ *         name:
+ *           type: string
+ *           description: Nombre del usuario
+ *         email:
+ *           type: string
+ *           description: Email del usuario
+ *         walletAddress:
+ *           type: string
+ *           description: Dirección de wallet del usuario
+ *     LoginRequest:
+ *       type: object
+ *       required:
+ *         - email
+ *         - password
+ *       properties:
+ *         email:
+ *           type: string
+ *           format: email
+ *           description: Email del usuario
+ *           example: "alice@mail.com"
+ *         password:
+ *           type: string
+ *           description: Contraseña del usuario
+ *           example: "hashed_pass3"
+ *     LoginResponse:
+ *       type: object
+ *       properties:
+ *         user:
+ *           type: string
+ *           description: Email del usuario autenticado
+ *           example: "alice@mail.com"
+ *         token:
+ *           type: string
+ *           description: Token JWT para autenticación
+ *           example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+ */
+
+/**
+ * @swagger
  * /users:
  *   get:
  *     summary: Listar usuarios
