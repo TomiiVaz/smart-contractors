@@ -1,0 +1,502 @@
+{
+  "info": {
+    "name": "WorkEscrow Backend API",
+    "description": "Colección completa para probar todos los endpoints del backend WorkEscrow",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3001",
+      "type": "string"
+    },
+    {
+      "key": "aliceWallet",
+      "value": "0x5B38Da6a701c568545dCfcB03FcB875f56beddC4",
+      "type": "string"
+    },
+    {
+      "key": "bobWallet",
+      "value": "0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2",
+      "type": "string"
+    },
+    {
+      "key": "charlieWallet",
+      "value": "0x4B20993Bc481177ec7E8f571ceCaE8A9e22C02db",
+      "type": "string"
+    },
+    {
+      "key": "dianaWallet",
+      "value": "0x78731D3Ca6b7E34aC0F824c42a7cC18A495cabAb",
+      "type": "string"
+    },
+    {
+      "key": "jwtToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "aliceEmail",
+      "value": "alice@mail.com",
+      "type": "string"
+    },
+    {
+      "key": "alicePassword",
+      "value": "hashed_pass3",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Autenticación",
+      "item": [
+        {
+          "name": "Login Alice",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.environment.set('jwtToken', response.token);",
+                  "    console.log('JWT Token obtenido:', response.token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{aliceEmail}}\",\n  \"password\": \"{{alicePassword}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/users/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "login"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Health Check",
+      "item": [
+        {
+          "name": "Health Check Básico",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/works/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["works", "health"]
+            }
+          }
+        },
+        {
+          "name": "Health Check Detallado",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/works/health/detailed",
+              "host": ["{{baseUrl}}"],
+              "path": ["works", "health", "detailed"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Usuarios",
+      "item": [
+        {
+          "name": "Obtener Balance Alice",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/works/balance/{{aliceWallet}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["works", "balance", "{{aliceWallet}}"]
+            }
+          }
+        },
+        {
+          "name": "Obtener Balance Bob",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/works/balance/{{bobWallet}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["works", "balance", "{{bobWallet}}"]
+            }
+          }
+        },
+        {
+          "name": "Aprobar Gasto USDC",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"spender\": \"0x1234567890abcdef1234567890abcdef12345678\",\n  \"amount\": \"1000.00\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/works/approve",
+              "host": ["{{baseUrl}}"],
+              "path": ["works", "approve"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Trabajos",
+      "item": [
+        {
+          "name": "Listar Todos los Trabajos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/works",
+              "host": ["{{baseUrl}}"],
+              "path": ["works"]
+            }
+          }
+        },
+        {
+          "name": "Listar Trabajos por Cliente",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/works?client={{aliceWallet}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["works"],
+              "query": [
+                {
+                  "key": "client",
+                  "value": "{{aliceWallet}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Listar Trabajos por Trabajador",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/works?worker={{bobWallet}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["works"],
+              "query": [
+                {
+                  "key": "worker",
+                  "value": "{{bobWallet}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Listar Trabajos por Estado (Created)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/works?status=0",
+              "host": ["{{baseUrl}}"],
+              "path": ["works"],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "0"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Obtener Trabajo Específico",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/works/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["works", "1"]
+            }
+          }
+        },
+        {
+          "name": "Crear Trabajo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"worker\": \"{{bobWallet}}\",\n  \"amount\": 150.75,\n  \"title\": \"Desarrollar API REST\",\n  \"description\": \"API REST con Node.js y Express para e-commerce\",\n  \"deadline\": 1704153600\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/works",
+              "host": ["{{baseUrl}}"],
+              "path": ["works"]
+            }
+          }
+        },
+        {
+          "name": "Aceptar Trabajo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"workerId\": 2\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/works/1/accept",
+              "host": ["{{baseUrl}}"],
+              "path": ["works", "1", "accept"]
+            }
+          }
+        },
+        {
+          "name": "Entregar Trabajo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"deliveryData\": \"https://github.com/usuario/proyecto-completado\",\n  \"workerId\": 2\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/works/2/submit",
+              "host": ["{{baseUrl}}"],
+              "path": ["works", "2", "submit"]
+            }
+          }
+        },
+        {
+          "name": "Aprobar Trabajo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"clientId\": 3\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/works/3/approve",
+              "host": ["{{baseUrl}}"],
+              "path": ["works", "3", "approve"]
+            }
+          }
+        },
+        {
+          "name": "Cancelar Trabajo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"clientId\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/works/5/cancel",
+              "host": ["{{baseUrl}}"],
+              "path": ["works", "5", "cancel"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Casos de Error",
+      "item": [
+        {
+          "name": "Error - Dirección Inválida",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/works/balance/invalid-address",
+              "host": ["{{baseUrl}}"],
+              "path": ["works", "balance", "invalid-address"]
+            }
+          }
+        },
+        {
+          "name": "Error - Trabajo No Encontrado",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/works/999",
+              "host": ["{{baseUrl}}"],
+              "path": ["works", "999"]
+            }
+          }
+        },
+        {
+          "name": "Error - Datos Faltantes",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"worker\": \"{{bobWallet}}\",\n  \"amount\": 100\n  // Faltan title, description, deadline\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/works",
+              "host": ["{{baseUrl}}"],
+              "path": ["works"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Flujo Completo",
+      "item": [
+        {
+          "name": "1. Crear Trabajo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"worker\": \"{{bobWallet}}\",\n  \"amount\": 500.00,\n  \"title\": \"Desarrollar DApp\",\n  \"description\": \"Aplicación descentralizada para gestión de documentos\",\n  \"deadline\": 1704240000\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/works",
+              "host": ["{{baseUrl}}"],
+              "path": ["works"]
+            }
+          }
+        },
+        {
+          "name": "2. Aceptar Trabajo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"workerId\": 2\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/works/6/accept",
+              "host": ["{{baseUrl}}"],
+              "path": ["works", "6", "accept"]
+            }
+          }
+        },
+        {
+          "name": "3. Entregar Trabajo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"deliveryData\": \"https://github.com/usuario/dapp-completada\",\n  \"workerId\": 2\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/works/6/submit",
+              "host": ["{{baseUrl}}"],
+              "path": ["works", "6", "submit"]
+            }
+          }
+        },
+        {
+          "name": "4. Aprobar Trabajo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"clientId\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/works/6/approve",
+              "host": ["{{baseUrl}}"],
+              "path": ["works", "6", "approve"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

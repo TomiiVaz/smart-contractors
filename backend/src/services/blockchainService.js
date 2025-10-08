@@ -1,260 +1,189 @@
-const { ethers } = require('ethers');
-require('dotenv').config();
+const axios = require('axios');
 
 class BlockchainService {
   constructor() {
-    this.provider = null;
-    this.wallet = null;
-    this.workEscrowContract = null;
-    this.usdcContract = null;
-    this.initialized = false;
+    this.apiUrl = process.env.BLOCKCHAIN_API_URL || 'http://localhost:3001';
+    this.isConnected = false;
   }
 
   async initialize() {
     try {
-      // Configurar provider
-      this.provider = new ethers.JsonRpcProvider(process.env.RPC_URL);
+      // Verificar que la API de blockchain esté disponible
+      const response = await axios.get(`${this.apiUrl}/health`);
       
-      // Configurar wallet
-      this.wallet = new ethers.Wallet(process.env.PRIVATE_KEY, this.provider);
-      
-      // ABI del contrato WorkEscrow (simplificado para las funciones que necesitamos)
-      const workEscrowABI = [
-        "function createWork(address _worker, uint256 _amount, string calldata _title, string calldata _description, uint256 _deadline) external returns (uint256)",
-        "function getWork(uint256 _workId) external view returns (tuple(uint256 id, address client, address worker, uint256 amount, string title, string description, uint8 status, uint256 createdAt, uint256 deadline, string deliveryData))",
-        "function acceptWork(uint256 _workId) external",
-        "function submitWork(uint256 _workId, string calldata _deliveryData) external",
-        "function approveWork(uint256 _workId) external",
-        "function cancelWork(uint256 _workId) external",
-        "function getNextWorkId() external view returns (uint256)",
-        "event WorkCreated(uint256 indexed workId, address indexed client, address indexed worker, uint256 amount, string title)"
-      ];
+      if (response.data.success) {
+        this.isConnected = true;
+        console.log('✅ Blockchain service conectado a API raíz');
+        console.log(`📍 API URL: ${this.apiUrl}`);
+      } else {
+        throw new Error('API de blockchain no responde correctamente');
+      }
 
-      // ABI del contrato USDC (simplificado)
-      const usdcABI = [
-        "function balanceOf(address account) external view returns (uint256)",
-        "function allowance(address owner, address spender) external view returns (uint256)",
-        "function approve(address spender, uint256 amount) external returns (bool)",
-        "function transfer(address to, uint256 amount) external returns (bool)",
-        "function transferFrom(address from, address to, uint256 amount) external returns (bool)"
-      ];
-
-      // Crear instancias de contratos
-      this.workEscrowContract = new ethers.Contract(
-        process.env.WORK_ESCROW_CONTRACT_ADDRESS,
-        workEscrowABI,
-        this.wallet
-      );
-
-      this.usdcContract = new ethers.Contract(
-        process.env.USDC_TOKEN_ADDRESS,
-        usdcABI,
-        this.wallet
-      );
-
-      this.initialized = true;
-      console.log('✅ BlockchainService inicializado correctamente');
-      
     } catch (error) {
-      console.error('❌ Error inicializando BlockchainService:', error);
+      console.error('❌ Error conectando con API de blockchain:', error.message);
+      this.isConnected = false;
       throw error;
     }
   }
 
-  async createWork(workData) {
-    if (!this.initialized) {
-      await this.initialize();
-    }
-
+  // Crear un nuevo trabajo
+  async createWork(workerAddress, amount, title, description, deadline) {
     try {
-      const {
-        workerAddress,
-        amount,
-        title,
-        description,
-        deadline
-      } = workData;
-
-      // Convertir amount a wei (USDC tiene 6 decimales)
-      const amountInWei = ethers.parseUnits(amount.toString(), 6);
-
-      // Verificar que el usuario tenga suficiente USDC
-      const balance = await this.usdcContract.balanceOf(this.wallet.address);
-      if (balance < amountInWei) {
-        throw new Error('Saldo insuficiente de USDC');
+      if (!this.isConnected) {
+        throw new Error('Blockchain service no está conectado');
       }
 
-      // Verificar allowance
-      const allowance = await this.usdcContract.allowance(this.wallet.address, process.env.WORK_ESCROW_CONTRACT_ADDRESS);
-      if (allowance < amountInWei) {
-        // Aprobar USDC para el contrato
-        const approveTx = await this.usdcContract.approve(process.env.WORK_ESCROW_CONTRACT_ADDRESS, amountInWei);
-        await approveTx.wait();
-        console.log('✅ USDC aprobado para el contrato');
-      }
-
-      // Crear trabajo en blockchain
-      const tx = await this.workEscrowContract.createWork(
-        workerAddress || ethers.ZeroAddress, // Si no hay worker, usar address(0)
-        amountInWei,
+      const response = await axios.post(`${this.apiUrl}/works`, {
+        worker: workerAddress,
+        amount: amount.toString(),
         title,
         description,
-        deadline || 0
-      );
-
-      console.log('📝 Transacción enviada:', tx.hash);
-      
-      // Esperar confirmación
-      const receipt = await tx.wait();
-      console.log('✅ Transacción confirmada en bloque:', receipt.blockNumber);
-
-      // Obtener el ID del trabajo desde el evento
-      const workCreatedEvent = receipt.logs.find(log => {
-        try {
-          const parsed = this.workEscrowContract.interface.parseLog(log);
-          return parsed.name === 'WorkCreated';
-        } catch (e) {
-          return false;
-        }
+        deadline: deadline.toString()
       });
 
-      let workId = null;
-      if (workCreatedEvent) {
-        const parsed = this.workEscrowContract.interface.parseLog(workCreatedEvent);
-        workId = parsed.args.workId.toString();
+      return response.data.data;
+
+    } catch (error) {
+      console.error('Error creando trabajo:', error);
+      throw error;
+    }
+  }
+
+  // Aceptar un trabajo
+  async acceptWork(workId) {
+    try {
+      if (!this.isConnected) {
+        throw new Error('Blockchain service no está conectado');
       }
 
-      return {
-        success: true,
-        transactionHash: tx.hash,
-        workId: workId,
-        blockNumber: receipt.blockNumber
-      };
+      const response = await axios.post(`${this.apiUrl}/works/${workId}/accept`);
+      return response.data.data;
 
     } catch (error) {
-      console.error('❌ Error creando trabajo en blockchain:', error);
+      console.error('Error aceptando trabajo:', error);
       throw error;
     }
   }
 
-  async getWork(workId) {
-    if (!this.initialized) {
-      await this.initialize();
-    }
-
-    try {
-      const work = await this.workEscrowContract.getWork(workId);
-      
-      // Convertir el struct a objeto JavaScript
-      return {
-        id: work.id.toString(),
-        client: work.client,
-        worker: work.worker,
-        amount: ethers.formatUnits(work.amount, 6), // Convertir de wei a USDC
-        title: work.title,
-        description: work.description,
-        status: work.status,
-        createdAt: work.createdAt.toString(),
-        deadline: work.deadline.toString(),
-        deliveryData: work.deliveryData
-      };
-    } catch (error) {
-      console.error('❌ Error obteniendo trabajo desde blockchain:', error);
-      throw error;
-    }
-  }
-
-  async acceptWork(workId) {
-    if (!this.initialized) {
-      await this.initialize();
-    }
-
-    try {
-      const tx = await this.workEscrowContract.acceptWork(workId);
-      const receipt = await tx.wait();
-      
-      return {
-        success: true,
-        transactionHash: tx.hash,
-        blockNumber: receipt.blockNumber
-      };
-    } catch (error) {
-      console.error('❌ Error aceptando trabajo:', error);
-      throw error;
-    }
-  }
-
+  // Entregar trabajo
   async submitWork(workId, deliveryData) {
-    if (!this.initialized) {
-      await this.initialize();
-    }
-
     try {
-      const tx = await this.workEscrowContract.submitWork(workId, deliveryData);
-      const receipt = await tx.wait();
-      
-      return {
-        success: true,
-        transactionHash: tx.hash,
-        blockNumber: receipt.blockNumber
-      };
+      if (!this.isConnected) {
+        throw new Error('Blockchain service no está conectado');
+      }
+
+      const response = await axios.post(`${this.apiUrl}/works/${workId}/submit`, {
+        deliveryData
+      });
+      return response.data.data;
+
     } catch (error) {
-      console.error('❌ Error entregando trabajo:', error);
+      console.error('Error entregando trabajo:', error);
       throw error;
     }
   }
 
+  // Aprobar trabajo
   async approveWork(workId) {
-    if (!this.initialized) {
-      await this.initialize();
-    }
-
     try {
-      const tx = await this.workEscrowContract.approveWork(workId);
-      const receipt = await tx.wait();
-      
-      return {
-        success: true,
-        transactionHash: tx.hash,
-        blockNumber: receipt.blockNumber
-      };
+      if (!this.isConnected) {
+        throw new Error('Blockchain service no está conectado');
+      }
+
+      const response = await axios.post(`${this.apiUrl}/works/${workId}/approve`);
+      return response.data.data;
+
     } catch (error) {
-      console.error('❌ Error aprobando trabajo:', error);
+      console.error('Error aprobando trabajo:', error);
       throw error;
     }
   }
 
+  // Cancelar trabajo
   async cancelWork(workId) {
-    if (!this.initialized) {
-      await this.initialize();
-    }
-
     try {
-      const tx = await this.workEscrowContract.cancelWork(workId);
-      const receipt = await tx.wait();
-      
-      return {
-        success: true,
-        transactionHash: tx.hash,
-        blockNumber: receipt.blockNumber
-      };
+      if (!this.isConnected) {
+        throw new Error('Blockchain service no está conectado');
+      }
+
+      const response = await axios.post(`${this.apiUrl}/works/${workId}/cancel`);
+      return response.data.data;
+
     } catch (error) {
-      console.error('❌ Error cancelando trabajo:', error);
+      console.error('Error cancelando trabajo:', error);
       throw error;
     }
   }
 
-  async getUSDCBalance(address) {
-    if (!this.initialized) {
-      await this.initialize();
-    }
-
+  // Obtener detalles de un trabajo
+  async getWork(workId) {
     try {
-      const balance = await this.usdcContract.balanceOf(address);
-      return ethers.formatUnits(balance, 6);
+      if (!this.isConnected) {
+        throw new Error('Blockchain service no está conectado');
+      }
+
+      const response = await axios.get(`${this.apiUrl}/works/${workId}`);
+      return response.data.data;
+
     } catch (error) {
-      console.error('❌ Error obteniendo balance USDC:', error);
+      console.error('Error obteniendo trabajo:', error);
       throw error;
+    }
+  }
+
+  // Obtener balance de USDC
+  async getUSDCBalance(address) {
+    try {
+      if (!this.isConnected) {
+        throw new Error('Blockchain service no está conectado');
+      }
+
+      const response = await axios.get(`${this.apiUrl}/users/balance/${address}`);
+      return response.data.data.balance;
+
+    } catch (error) {
+      console.error('Error obteniendo balance USDC:', error);
+      throw error;
+    }
+  }
+
+  // Aprobar gasto de USDC
+  async approveUSDC(spenderAddress, amount) {
+    try {
+      if (!this.isConnected) {
+        throw new Error('Blockchain service no está conectado');
+      }
+
+      const response = await axios.post(`${this.apiUrl}/users/approve`, {
+        spender: spenderAddress,
+        amount: amount.toString()
+      });
+      return response.data.data;
+
+    } catch (error) {
+      console.error('Error aprobando USDC:', error);
+      throw error;
+    }
+  }
+
+  // Verificar conexión con blockchain
+  async checkConnection() {
+    try {
+      if (!this.isConnected) {
+        return { connected: false, error: 'Service not initialized' };
+      }
+
+      const response = await axios.get(`${this.apiUrl}/health/detailed`);
+      
+      return {
+        connected: response.data.success,
+        apiUrl: this.apiUrl,
+        status: response.data.status,
+        services: response.data.services
+      };
+
+    } catch (error) {
+      return { connected: false, error: error.message };
     }
   }
 }

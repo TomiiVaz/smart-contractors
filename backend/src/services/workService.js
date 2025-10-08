@@ -1,10 +1,21 @@
 const workRepository = require('../repositories/workRepository');
+const blockchainService = require('./blockchainService');
 
-const createWork = async (workData) => {
+// Inicializar blockchain service cuando se carga el módulo
+blockchainService.initialize()
+  .then(() => {
+    console.log('✅ Blockchain service inicializado correctamente');
+  })
+  .catch((error) => {
+    console.error('❌ Error inicializando blockchain service:', error.message);
+    console.log('⚠️  Continuando sin blockchain service...');
+  });
+
+const createWork = async (workData, userId = null) => {
   try {
     // Validaciones
-    if (!workData.clientId) {
-      throw new Error('Client ID is required');
+    if (!workData.worker) {
+      throw new Error('Worker address is required');
     }
     if (!workData.amount || workData.amount <= 0) {
       throw new Error('Amount must be greater than 0');
@@ -15,25 +26,43 @@ const createWork = async (workData) => {
     if (!workData.description || workData.description.trim() === '') {
       throw new Error('Description is required');
     }
+    if (!workData.deadline) {
+      throw new Error('Deadline is required');
+    }
 
-    // Validar deadline si se proporciona
-    if (workData.deadline && workData.deadline < Date.now() / 1000) {
+    // Validar deadline
+    if (workData.deadline < Date.now() / 1000) {
       throw new Error('Deadline must be in the future');
     }
 
-    console.log('🚀 Creando trabajo...');
+    console.log('🚀 Creando trabajo en blockchain...');
+
+    // Crear trabajo en blockchain
+    const blockchainResult = await blockchainService.createWork(
+      workData.worker,
+      workData.amount,
+      workData.title,
+      workData.description,
+      workData.deadline
+    );
+
+    console.log('✅ Trabajo creado en blockchain:', blockchainResult.workId);
 
     // Guardar en base de datos local
     const dbWorkData = {
-      clientId: workData.clientId,
-      workerId: workData.workerId || null,
+      clientId: userId, // Usuario autenticado
+      workerId: null,
+      clientAddress: workData.clientAddress || '0x0000000000000000000000000000000000000000', // TODO: Obtener del token JWT
+      workerAddress: workData.worker,
       amount: workData.amount,
       title: workData.title,
       description: workData.description,
       statusId: 0, // 0 = Created
-      createdAt: Math.floor(Date.now() / 1000), // Timestamp actual
-      deadline: workData.deadline || null,
-      deliveryData: null
+      createdAt: Math.floor(Date.now() / 1000),
+      deadline: workData.deadline,
+      deliveryData: null,
+      blockchainWorkId: blockchainResult.workId,
+      transactionHash: blockchainResult.transactionHash
     };
 
     return new Promise((resolve, reject) => {
@@ -43,7 +72,11 @@ const createWork = async (workData) => {
           reject(err);
         } else {
           console.log('✅ Trabajo guardado en base de datos:', work.id);
-          resolve(work);
+          resolve({
+            ...work,
+            blockchainWorkId: blockchainResult.workId,
+            transactionHash: blockchainResult.transactionHash
+          });
         }
       });
     });
@@ -231,6 +264,66 @@ const cancelWork = async (workId, clientId) => {
   }
 };
 
+// Actualizar estado de trabajo
+const updateWorkStatus = async (workId, statusId) => {
+  try {
+    return new Promise((resolve, reject) => {
+      workRepository.updateWork(workId, { statusId }, (err, updatedWork) => {
+        if (err) return reject(err);
+        resolve(updatedWork);
+      });
+    });
+  } catch (error) {
+    console.error('❌ Error en updateWorkStatus service:', error);
+    throw error;
+  }
+};
+
+// Actualizar datos de entrega
+const updateWorkDelivery = async (workId, deliveryData) => {
+  try {
+    return new Promise((resolve, reject) => {
+      workRepository.updateWork(workId, { deliveryData }, (err, updatedWork) => {
+        if (err) return reject(err);
+        resolve(updatedWork);
+      });
+    });
+  } catch (error) {
+    console.error('❌ Error en updateWorkDelivery service:', error);
+    throw error;
+  }
+};
+
+// Obtener balance USDC
+const getUSDCBalance = async (address) => {
+  try {
+    return await blockchainService.getUSDCBalance(address);
+  } catch (error) {
+    console.error('❌ Error en getUSDCBalance service:', error);
+    throw error;
+  }
+};
+
+// Aprobar gasto USDC
+const approveUSDC = async (spender, amount) => {
+  try {
+    return await blockchainService.approveUSDC(spender, amount);
+  } catch (error) {
+    console.error('❌ Error en approveUSDC service:', error);
+    throw error;
+  }
+};
+
+// Verificar conexión con blockchain
+const checkBlockchainConnection = async () => {
+  try {
+    return await blockchainService.checkConnection();
+  } catch (error) {
+    console.error('❌ Error en checkBlockchainConnection service:', error);
+    throw error;
+  }
+};
+
 module.exports = {
   createWork,
   getWork,
@@ -241,5 +334,10 @@ module.exports = {
   acceptWork,
   submitWork,
   approveWork,
-  cancelWork
+  cancelWork,
+  updateWorkStatus,
+  updateWorkDelivery,
+  getUSDCBalance,
+  approveUSDC,
+  checkBlockchainConnection
 };
