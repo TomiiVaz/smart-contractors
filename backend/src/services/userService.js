@@ -40,8 +40,43 @@ const login = (email, password, callback) => {
   });
 };
 
+// Actualizar dirección de wallet
+const updateWalletAddress = (userId, walletAddress, callback) => {
+  if (!userId || !walletAddress) {
+    return callback(new Error("User ID y wallet address son requeridos"));
+  }
+
+  // Validar formato de dirección de wallet
+  if (!walletAddress.match(/^0x[a-fA-F0-9]{40}$/)) {
+    return callback(new Error("Formato de dirección de wallet inválido"));
+  }
+
+  userRepository.updateWalletAddress(userId, walletAddress, callback);
+};
+
+// Obtener usuario por ID
+const getUserById = (userId, callback) => {
+  if (!userId) {
+    return callback(new Error("User ID es requerido"));
+  }
+
+  userRepository.findById(userId, callback);
+};
+
+// Obtener usuario por email
+const getUserByEmail = (email, callback) => {
+  if (!email) {
+    return callback(new Error("Email es requerido"));
+  }
+
+  userRepository.findByEmail(email, callback);
+};
+
 module.exports = {
   listUsers,
   addUser,
-  login
+  login,
+  updateWalletAddress,
+  getUserById,
+  getUserByEmail
 };

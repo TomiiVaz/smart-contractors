@@ -165,4 +165,142 @@ router.post('/login', (req, res) => {
   });
 });
 
+/**
+ * @swagger
+ * /users/{id}/wallet:
+ *   put:
+ *     summary: Actualizar dirección de wallet
+ *     description: Actualiza la dirección de wallet de un usuario
+ *     tags: [Usuarios]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID del usuario
+ *         example: 1
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: ['wallet_address']
+ *             properties:
+ *               wallet_address:
+ *                 type: string
+ *                 description: Dirección de wallet del usuario
+ *                 example: "0x5B38Da6a701c568545dCfcB03FcB875f56beddC4"
+ *     responses:
+ *       200:
+ *         description: Dirección de wallet actualizada exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Success'
+ *       400:
+ *         description: Error de validación
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: Usuario no encontrado
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.put('/:id/wallet', (req, res) => {
+  const userId = parseInt(req.params.id);
+  const { wallet_address } = req.body;
+
+  if (isNaN(userId)) {
+    return res.status(400).json({ error: 'ID de usuario inválido' });
+  }
+
+  if (!wallet_address) {
+    return res.status(400).json({ error: 'Dirección de wallet es requerida' });
+  }
+
+  userService.updateWalletAddress(userId, wallet_address, (err, result) => {
+    if (err) {
+      if (err.message === 'Usuario no encontrado') {
+        return res.status(404).json({ error: err.message });
+      }
+      return res.status(400).json({ error: err.message });
+    }
+
+    res.json({
+      success: true,
+      message: 'Wallet address actualizada exitosamente',
+      data: result
+    });
+  });
+});
+
+/**
+ * @swagger
+ * /users/{id}:
+ *   get:
+ *     summary: Obtener usuario por ID
+ *     description: Obtiene los detalles de un usuario específico
+ *     tags: [Usuarios]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID del usuario
+ *         example: 1
+ *     responses:
+ *       200:
+ *         description: Usuario encontrado
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   $ref: '#/components/schemas/User'
+ *       404:
+ *         description: Usuario no encontrado
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       400:
+ *         description: ID inválido
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.get('/:id', (req, res) => {
+  const userId = parseInt(req.params.id);
+
+  if (isNaN(userId)) {
+    return res.status(400).json({ error: 'ID de usuario inválido' });
+  }
+
+  userService.getUserById(userId, (err, user) => {
+    if (err) {
+      return res.status(400).json({ error: err.message });
+    }
+
+    if (!user) {
+      return res.status(404).json({ error: 'Usuario no encontrado' });
+    }
+
+    res.json({
+      success: true,
+      data: user
+    });
+  });
+});
+
 module.exports = router;

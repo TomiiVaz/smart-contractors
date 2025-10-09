@@ -26,12 +26,17 @@ class BlockchainService {
     }
   }
 
+  // Verificar disponibilidad de blockchain
+  checkAvailability() {
+    if (!this.isConnected) {
+      throw new Error('Blockchain API no está disponible. No se pueden ejecutar operaciones que requieren blockchain.');
+    }
+  }
+
   // Crear un nuevo trabajo
   async createWork(workerAddress, amount, title, description, deadline) {
     try {
-      if (!this.isConnected) {
-        throw new Error('Blockchain service no está conectado');
-      }
+      this.checkAvailability();
 
       const response = await axios.post(`${this.apiUrl}/works`, {
         worker: workerAddress,
@@ -52,9 +57,7 @@ class BlockchainService {
   // Aceptar un trabajo
   async acceptWork(workId) {
     try {
-      if (!this.isConnected) {
-        throw new Error('Blockchain service no está conectado');
-      }
+      this.checkAvailability();
 
       const response = await axios.post(`${this.apiUrl}/works/${workId}/accept`);
       return response.data.data;
@@ -68,9 +71,7 @@ class BlockchainService {
   // Entregar trabajo
   async submitWork(workId, deliveryData) {
     try {
-      if (!this.isConnected) {
-        throw new Error('Blockchain service no está conectado');
-      }
+      this.checkAvailability();
 
       const response = await axios.post(`${this.apiUrl}/works/${workId}/submit`, {
         deliveryData
@@ -86,9 +87,7 @@ class BlockchainService {
   // Aprobar trabajo
   async approveWork(workId) {
     try {
-      if (!this.isConnected) {
-        throw new Error('Blockchain service no está conectado');
-      }
+      this.checkAvailability();
 
       const response = await axios.post(`${this.apiUrl}/works/${workId}/approve`);
       return response.data.data;
@@ -102,9 +101,7 @@ class BlockchainService {
   // Cancelar trabajo
   async cancelWork(workId) {
     try {
-      if (!this.isConnected) {
-        throw new Error('Blockchain service no está conectado');
-      }
+      this.checkAvailability();
 
       const response = await axios.post(`${this.apiUrl}/works/${workId}/cancel`);
       return response.data.data;
@@ -134,9 +131,7 @@ class BlockchainService {
   // Obtener balance de USDC
   async getUSDCBalance(address) {
     try {
-      if (!this.isConnected) {
-        throw new Error('Blockchain service no está conectado');
-      }
+      this.checkAvailability();
 
       const response = await axios.get(`${this.apiUrl}/users/balance/${address}`);
       return response.data.data.balance;
@@ -150,9 +145,7 @@ class BlockchainService {
   // Aprobar gasto de USDC
   async approveUSDC(spenderAddress, amount) {
     try {
-      if (!this.isConnected) {
-        throw new Error('Blockchain service no está conectado');
-      }
+      this.checkAvailability();
 
       const response = await axios.post(`${this.apiUrl}/users/approve`, {
         spender: spenderAddress,

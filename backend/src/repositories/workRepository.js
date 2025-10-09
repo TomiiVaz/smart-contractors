@@ -25,6 +25,19 @@ const getWorkByBlockchainId = (blockchainWorkId, callback) => {
   });
 };
 
+// Obtener trabajos de un usuario específico (como cliente, trabajador o disponibles)
+const getWorksByUser = (userId, callback) => {
+  db.all(`
+    SELECT * FROM works 
+    WHERE client_id = ? OR worker_id = ? OR worker_id IS NULL 
+    ORDER BY created_at DESC
+  `, [userId, userId], (err, rows) => {
+    if (err) return callback(err);
+    const works = rows.map(row => Work.fromDB(row));
+    callback(null, works);
+  });
+};
+
 const getWorksByClient = (clientId, callback) => {
   db.all("SELECT * FROM works WHERE client_id = ? ORDER BY created_at DESC", [clientId], (err, rows) => {
     if (err) return callback(err);
@@ -141,6 +154,7 @@ module.exports = {
   getAllWorks,
   getWorkById,
   getWorkByBlockchainId,
+  getWorksByUser,
   getWorksByClient,
   getWorksByWorker,
   createWork,

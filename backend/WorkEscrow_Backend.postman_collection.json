@@ -124,7 +124,12 @@
           "name": "Obtener Balance Alice",
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/works/balance/{{aliceWallet}}",
               "host": ["{{baseUrl}}"],
@@ -136,7 +141,12 @@
           "name": "Obtener Balance Bob",
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/works/balance/{{bobWallet}}",
               "host": ["{{baseUrl}}"],
@@ -152,6 +162,10 @@
               {
                 "key": "Content-Type",
                 "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}"
               }
             ],
             "body": {
@@ -171,10 +185,15 @@
       "name": "Trabajos",
       "item": [
         {
-          "name": "Listar Todos los Trabajos",
+          "name": "Listar Trabajos del Usuario",
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/works",
               "host": ["{{baseUrl}}"],
@@ -186,17 +205,16 @@
           "name": "Listar Trabajos por Cliente",
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}"
+              }
+            ],
             "url": {
-              "raw": "{{baseUrl}}/works?client={{aliceWallet}}",
+              "raw": "{{baseUrl}}/works/client/1",
               "host": ["{{baseUrl}}"],
-              "path": ["works"],
-              "query": [
-                {
-                  "key": "client",
-                  "value": "{{aliceWallet}}"
-                }
-              ]
+              "path": ["works", "client", "1"]
             }
           }
         },
@@ -204,35 +222,16 @@
           "name": "Listar Trabajos por Trabajador",
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}"
+              }
+            ],
             "url": {
-              "raw": "{{baseUrl}}/works?worker={{bobWallet}}",
+              "raw": "{{baseUrl}}/works/worker/2",
               "host": ["{{baseUrl}}"],
-              "path": ["works"],
-              "query": [
-                {
-                  "key": "worker",
-                  "value": "{{bobWallet}}"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "name": "Listar Trabajos por Estado (Created)",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/works?status=0",
-              "host": ["{{baseUrl}}"],
-              "path": ["works"],
-              "query": [
-                {
-                  "key": "status",
-                  "value": "0"
-                }
-              ]
+              "path": ["works", "worker", "2"]
             }
           }
         },
@@ -240,7 +239,12 @@
           "name": "Obtener Trabajo Específico",
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/works/1",
               "host": ["{{baseUrl}}"],
@@ -281,6 +285,10 @@
               {
                 "key": "Content-Type",
                 "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}"
               }
             ],
             "body": {
@@ -302,6 +310,10 @@
               {
                 "key": "Content-Type",
                 "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}"
               }
             ],
             "body": {
@@ -323,6 +335,10 @@
               {
                 "key": "Content-Type",
                 "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}"
               }
             ],
             "body": {
@@ -344,6 +360,10 @@
               {
                 "key": "Content-Type",
                 "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}"
               }
             ],
             "body": {
@@ -420,6 +440,10 @@
               {
                 "key": "Content-Type",
                 "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}"
               }
             ],
             "body": {
@@ -441,6 +465,10 @@
               {
                 "key": "Content-Type",
                 "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}"
               }
             ],
             "body": {
@@ -462,6 +490,10 @@
               {
                 "key": "Content-Type",
                 "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}"
               }
             ],
             "body": {
@@ -483,6 +515,10 @@
               {
                 "key": "Content-Type",
                 "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}"
               }
             ],
             "body": {

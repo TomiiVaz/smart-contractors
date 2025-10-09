@@ -254,9 +254,11 @@ router.post('/', authMiddleware, async (req, res) => {
  * @swagger
  * /works:
  *   get:
- *     summary: Obtener todos los trabajos
- *     description: Obtiene la lista de todos los trabajos con filtros opcionales
+ *     summary: Obtener trabajos del usuario
+ *     description: Obtiene trabajos donde el usuario es cliente, trabajador o trabajos disponibles
  *     tags: [Trabajos]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: query
  *         name: client
@@ -287,10 +289,21 @@ router.post('/', authMiddleware, async (req, res) => {
  *                   type: array
  *                   items:
  *                     $ref: '#/components/schemas/Work'
+ *       401:
+ *         description: No autorizado
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
-router.get('/', async (req, res) => {
+router.get('/', authMiddleware, async (req, res) => {
   try {
-    const works = await workService.getAllWorks();
+    // El usuario autenticado ve:
+    // 1. Trabajos donde es cliente
+    // 2. Trabajos donde es trabajador  
+    // 3. Trabajos disponibles (sin trabajador asignado)
+    const userId = req.user.id;
+    const works = await workService.getWorksByUser(userId);
     res.json({
       success: true,
       data: works
@@ -311,6 +324,8 @@ router.get('/', async (req, res) => {
  *     summary: Obtener trabajo por ID
  *     description: Obtiene los detalles de un trabajo específico
  *     tags: [Trabajos]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -343,8 +358,14 @@ router.get('/', async (req, res) => {
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: No autorizado
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
-router.get('/:id', async (req, res) => {
+router.get('/:id', authMiddleware, async (req, res) => {
   try {
     const workId = parseInt(req.params.id);
     if (isNaN(workId)) {
@@ -379,6 +400,8 @@ router.get('/:id', async (req, res) => {
  *     summary: Obtener trabajos por cliente
  *     description: Obtiene todos los trabajos de un cliente específico
  *     tags: [Trabajos]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -407,8 +430,14 @@ router.get('/:id', async (req, res) => {
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: No autorizado
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
-router.get('/client/:id', async (req, res) => {
+router.get('/client/:id', authMiddleware, async (req, res) => {
   try {
     const clientId = parseInt(req.params.id);
 
@@ -437,6 +466,8 @@ router.get('/client/:id', async (req, res) => {
  *     summary: Obtener trabajos por trabajador
  *     description: Obtiene todos los trabajos de un trabajador específico
  *     tags: [Trabajos]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -465,8 +496,14 @@ router.get('/client/:id', async (req, res) => {
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: No autorizado
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
-router.get('/worker/:id', async (req, res) => {
+router.get('/worker/:id', authMiddleware, async (req, res) => {
   try {
     const workerId = parseInt(req.params.id);
 
@@ -796,6 +833,8 @@ router.post('/:id/cancel', authMiddleware, async (req, res) => {
  *     summary: Obtener balance USDC
  *     description: Obtiene el balance de USDC de una dirección de wallet
  *     tags: [Usuarios]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: address
@@ -822,8 +861,14 @@ router.post('/:id/cancel', authMiddleware, async (req, res) => {
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: No autorizado
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
-router.get('/balance/:address', async (req, res) => {
+router.get('/balance/:address', authMiddleware, async (req, res) => {
   try {
     const address = req.params.address;
 
@@ -859,6 +904,8 @@ router.get('/balance/:address', async (req, res) => {
  *     summary: Aprobar gasto USDC
  *     description: Aprueba el gasto de USDC para un contrato específico
  *     tags: [Blockchain]
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -881,8 +928,14 @@ router.get('/balance/:address', async (req, res) => {
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: No autorizado
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
-router.post('/approve', async (req, res) => {
+router.post('/approve', authMiddleware, async (req, res) => {
   try {
     const { spender, amount } = req.body;
 

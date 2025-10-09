@@ -5,7 +5,7 @@ const User = require('../model/user');
 const getAllUsers = (callback) => {
   db.all("SELECT * FROM users", [], (err, rows) => {
     if (err) return callback(err);
-    const users = rows.map(row => new User(row.id, row.name, row.email, row.password));
+    const users = rows.map(row => new User(row.id, row.name, row.email, row.password, row.wallet_address));
     callback(null, users);
   });
 };
@@ -13,11 +13,11 @@ const getAllUsers = (callback) => {
 // Crear usuario
 const createUser = (user, callback) => {
   db.run(
-    "INSERT INTO users (name, email, password) VALUES (?, ?, ?)",
-    [user.name, user.email, user.password],
+    "INSERT INTO users (name, email, password, wallet_address) VALUES (?, ?, ?, ?)",
+    [user.name, user.email, user.password, user.wallet_address || null],
     function (err) {
       if (err) return callback(err);
-      callback(null, new User(this.lastID, user.name, user.email, user.password));
+      callback(null, new User(this.lastID, user.name, user.email, user.password, user.wallet_address));
     }
   );
 };
@@ -27,7 +27,32 @@ const findByEmail = (email, callback) => {
   db.get("SELECT * FROM users WHERE email = ?", [email], (err, row) => {
     if (err) return callback(err);
     if (!row) return callback(null, null);
-    const user = new User(row.id, row.name, row.email, row.password);
+    const user = new User(row.id, row.name, row.email, row.password, row.wallet_address);
+    callback(null, user);
+  });
+};
+
+// Actualizar dirección de wallet
+const updateWalletAddress = (userId, walletAddress, callback) => {
+  db.run(
+    "UPDATE users SET wallet_address = ? WHERE id = ?",
+    [walletAddress, userId],
+    function (err) {
+      if (err) return callback(err);
+      if (this.changes === 0) {
+        return callback(new Error('Usuario no encontrado'));
+      }
+      callback(null, { success: true, message: 'Wallet address actualizada' });
+    }
+  );
+};
+
+// Buscar usuario por ID
+const findById = (id, callback) => {
+  db.get("SELECT * FROM users WHERE id = ?", [id], (err, row) => {
+    if (err) return callback(err);
+    if (!row) return callback(null, null);
+    const user = new User(row.id, row.name, row.email, row.password, row.wallet_address);
     callback(null, user);
   });
 };
@@ -35,5 +60,7 @@ const findByEmail = (email, callback) => {
 module.exports = {
   getAllUsers,
   createUser,
-  findByEmail
+  findByEmail,
+  updateWalletAddress,
+  findById
 };

@@ -1,20 +1,22 @@
-// states.js
+// states.js - Estados alineados con el smart contract WorkEscrow.sol
 const STATES = {
-    PENDING: "PENDING",
-    IN_PROGRESS: "IN_PROGRESS",
-    COMPLETED: "COMPLETED",
-    CANCELLED: "CANCELLED",
+    CREATED: "Created",
+    IN_PROGRESS: "InProgress", 
+    SUBMITTED: "Submitted",
+    COMPLETED: "Completed",
+    CANCELLED: "Cancelled"
 };
 
 const TRANSITIONS = {
-    PENDING: ["IN_PROGRESS", "CANCELLED"],
-    IN_PROGRESS: ["COMPLETED", "CANCELLED"],
-    COMPLETED: [],
-    CANCELLED: [],
+    Created: ["InProgress", "Cancelled"],
+    InProgress: ["Submitted", "Cancelled"],
+    Submitted: ["Completed", "Cancelled"],
+    Completed: [],
+    Cancelled: []
 };
 
 class StatusMachine {
-    constructor(initialState = STATES.PENDING) {
+    constructor(initialState = STATES.CREATED) {
         this.state = initialState;
     }
 

@@ -116,6 +116,16 @@ const getAllWorks = () => {
   });
 };
 
+// Obtener trabajos de un usuario específico (como cliente o trabajador)
+const getWorksByUser = (userId) => {
+  return new Promise((resolve, reject) => {
+    workRepository.getWorksByUser(userId, (err, works) => {
+      if (err) return reject(err);
+      resolve(works);
+    });
+  });
+};
+
 const getWorksByClient = (clientId) => {
   return new Promise((resolve, reject) => {
     workRepository.getWorksByClient(clientId, (err, works) => {
@@ -329,6 +339,7 @@ module.exports = {
   getWork,
   getWorkByBlockchainId,
   getAllWorks,
+  getWorksByUser,
   getWorksByClient,
   getWorksByWorker,
   acceptWork,
