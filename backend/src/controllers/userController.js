@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const userService = require('../services/userService');
+const workService = require('../services/workService');
+const authMiddleware = require('../middleware/authMiddleware');
 
 /**
  * @swagger
@@ -66,7 +68,7 @@ const userService = require('../services/userService');
  *               items:
  *                 $ref: '#/components/schemas/User'
  */
-router.get('/', (req, res) => {
+router.get('/', (req, res) => { // Propio para pruebas
   userService.listUsers((err, users) => {
     if (err) return res.status(500).json({ error: err.message });
     res.json(users);
@@ -167,40 +169,32 @@ router.post('/login', (req, res) => {
 
 /**
  * @swagger
- * /users/{id}/wallet:
- *   put:
- *     summary: Actualizar dirección de wallet
- *     description: Actualiza la dirección de wallet de un usuario
+ * /users/wallet:
+ *   get:
+ *     summary: Obtener wallet address del usuario autenticado
+ *     description: Obtiene la dirección de wallet del usuario autenticado
  *     tags: [Usuarios]
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *         description: ID del usuario
- *         example: 1
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required: ['wallet_address']
- *             properties:
- *               wallet_address:
- *                 type: string
- *                 description: Dirección de wallet del usuario
- *                 example: "0x5B38Da6a701c568545dCfcB03FcB875f56beddC4"
+ *     security:
+ *       - bearerAuth: []
  *     responses:
  *       200:
- *         description: Dirección de wallet actualizada exitosamente
+ *         description: Wallet address obtenido exitosamente
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/Success'
- *       400:
- *         description: Error de validación
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     walletAddress:
+ *                       type: string
+ *                       description: Dirección de wallet del usuario
+ *                       example: "0x5B38Da6a701c568545dCfcB03FcB875f56beddC4"
+ *       401:
+ *         description: No autorizado
  *         content:
  *           application/json:
  *             schema:
@@ -212,32 +206,126 @@ router.post('/login', (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.put('/:id/wallet', (req, res) => {
-  const userId = parseInt(req.params.id);
-  const { wallet_address } = req.body;
-
-  if (isNaN(userId)) {
-    return res.status(400).json({ error: 'ID de usuario inválido' });
+router.get('/wallet', authMiddleware, (req, res) => {
+  const userId = req.user.id;
+  
+  // Validar que el userId existe
+  if (!userId) {
+    return res.status(400).json({ error: 'ID de usuario no encontrado en el token' });
   }
 
-  if (!wallet_address) {
-    return res.status(400).json({ error: 'Dirección de wallet es requerida' });
-  }
-
-  userService.updateWalletAddress(userId, wallet_address, (err, result) => {
+  userService.getUserById(userId, (err, user) => {
     if (err) {
-      if (err.message === 'Usuario no encontrado') {
-        return res.status(404).json({ error: err.message });
-      }
       return res.status(400).json({ error: err.message });
+    }
+
+    if (!user) {
+      return res.status(404).json({ error: 'Usuario no encontrado' });
     }
 
     res.json({
       success: true,
-      message: 'Wallet address actualizada exitosamente',
-      data: result
+      data: {
+        walletAddress: user.wallet_address
+      }
     });
   });
+});
+
+/**
+ * @swagger
+ * /users/balance:
+ *   get:
+ *     summary: Obtener balance USDC del usuario autenticado
+ *     description: Obtiene el balance de USDC del usuario autenticado desde blockchain
+ *     tags: [Usuarios]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Balance obtenido exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     balance:
+ *                       type: string
+ *                       description: Balance en USDC
+ *                       example: "1000.50"
+ *       401:
+ *         description: No autorizado
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: Usuario no encontrado
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Error de blockchain
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.get('/balance', authMiddleware, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    
+    // Validar que el userId existe
+    if (!userId) {
+      return res.status(400).json({ error: 'ID de usuario no encontrado en el token' });
+    }
+    
+    // Obtener usuario para conseguir su wallet address
+    userService.getUserById(userId, (err, user) => {
+      if (err) {
+        return res.status(400).json({ error: err.message });
+      }
+
+      if (!user) {
+        return res.status(404).json({ error: 'Usuario no encontrado' });
+      }
+
+      if (!user.wallet_address) {
+        return res.status(400).json({ error: 'Usuario no tiene wallet address configurado' });
+      }
+
+      // Obtener balance desde blockchain
+      workService.getUSDCBalance(user.wallet_address)
+        .then(balance => {
+          res.json({
+            success: true,
+            data: {
+              balance: balance
+            }
+          });
+        })
+        .catch(error => {
+          console.error('Error getting balance:', error);
+          res.status(500).json({
+            success: false,
+            error: error.message || 'Error obteniendo balance desde blockchain'
+          });
+        });
+    });
+
+  } catch (error) {
+    console.error('Error in balance endpoint:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Internal server error'
+    });
+  }
 });
 
 /**

@@ -7,7 +7,6 @@ const app = express();
 
 const userController = require('./controllers/userController');
 const workController = require('./controllers/workController');
-const authMiddleware = require('./middleware/authMiddleware');
 
 const jwtSecret = process.env.JWT_SECRET;
 

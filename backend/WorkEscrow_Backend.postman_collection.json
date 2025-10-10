@@ -178,6 +178,40 @@
               "path": ["works", "approve"]
             }
           }
+        },
+        {
+          "name": "Obtener Wallet del Usuario",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/users/wallet",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "wallet"]
+            }
+          }
+        },
+        {
+          "name": "Obtener Balance del Usuario",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/users/balance",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "balance"]
+            }
+          }
         }
       ]
     },

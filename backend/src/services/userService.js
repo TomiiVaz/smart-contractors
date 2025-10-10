@@ -40,19 +40,6 @@ const login = (email, password, callback) => {
   });
 };
 
-// Actualizar dirección de wallet
-const updateWalletAddress = (userId, walletAddress, callback) => {
-  if (!userId || !walletAddress) {
-    return callback(new Error("User ID y wallet address son requeridos"));
-  }
-
-  // Validar formato de dirección de wallet
-  if (!walletAddress.match(/^0x[a-fA-F0-9]{40}$/)) {
-    return callback(new Error("Formato de dirección de wallet inválido"));
-  }
-
-  userRepository.updateWalletAddress(userId, walletAddress, callback);
-};
 
 // Obtener usuario por ID
 const getUserById = (userId, callback) => {
@@ -76,7 +63,6 @@ module.exports = {
   listUsers,
   addUser,
   login,
-  updateWalletAddress,
   getUserById,
   getUserByEmail
 };

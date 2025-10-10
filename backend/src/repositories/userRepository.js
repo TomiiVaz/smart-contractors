@@ -32,20 +32,6 @@ const findByEmail = (email, callback) => {
   });
 };
 
-// Actualizar dirección de wallet
-const updateWalletAddress = (userId, walletAddress, callback) => {
-  db.run(
-    "UPDATE users SET wallet_address = ? WHERE id = ?",
-    [walletAddress, userId],
-    function (err) {
-      if (err) return callback(err);
-      if (this.changes === 0) {
-        return callback(new Error('Usuario no encontrado'));
-      }
-      callback(null, { success: true, message: 'Wallet address actualizada' });
-    }
-  );
-};
 
 // Buscar usuario por ID
 const findById = (id, callback) => {
@@ -61,6 +47,5 @@ module.exports = {
   getAllUsers,
   createUser,
   findByEmail,
-  updateWalletAddress,
   findById
 };
