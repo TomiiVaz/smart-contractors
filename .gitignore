@@ -1,24 +1,32 @@
 # Node modules
 /node_modules
 /backend/node_modules/
+/blockchain/node_modules/
 
 # Data backend
 /backend/data/
 
 # Compilation output
 /dist
+/blockchain/dist
 
 # pnpm deploy output
 /bundle
+/blockchain/bundle
+
 
 # Hardhat Build Artifacts
 /artifacts
+/blockchain/artifacts
 
 # Hardhat compilation (v2) support directory
 /cache
+/blockchain/cache
 
 # Typechain output
 /types
+/blockchain/types
 
 # Hardhat coverage reports
 /coverage
+/blockchain/coverage
