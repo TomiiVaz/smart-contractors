@@ -26,7 +26,7 @@
 
 ## 📋 **Descripción General**
 
-Backend que actúa como intermediario entre el frontend y la API raíz de blockchain, con documentación completa en Swagger, autenticación JWT y arquitectura de 3 capas.
+Backend que actúa como intermediario entre el frontend y la blockchain (Hardhat), con documentación completa en Swagger, autenticación JWT y arquitectura de 3 capas.
 
 ---
 
@@ -36,12 +36,12 @@ Backend que actúa como intermediario entre el frontend y la API raíz de blockc
 
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   FRONTEND      │    │   BACKEND       │    │  API RAÍZ        │
-│   (React/Vue)   │    │   (Node.js)     │    │  (Blockchain)    │
-│   Puerto: 3002  │───▶│   Puerto: 3001  │───▶│   Puerto: 3000  │
+│   FRONTEND      │    │   BACKEND       │    │   HARDHAT        │
+│   (React/Vue)   │    │   (Node.js)     │    │   (Blockchain)   │
+│   Puerto: 3002  │───▶│   Puerto: 3001  │───▶│   Puerto: 8545   │
 │                 │    │                 │    │                 │
 │   Frontend UI   │    │   API REST      │    │   Smart Contracts│
-│   Swagger UI    │    │   SQLite DB     │    │   Hardhat/Ethers │
+│   Swagger UI    │    │   SQLite DB     │    │   Ethers.js      │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
 ```
 
@@ -49,14 +49,14 @@ Backend que actúa como intermediario entre el frontend y la API raíz de blockc
 
 - **Frontend**: `http://localhost:3002`
 - **Backend**: `http://localhost:3001`
-- **API Raíz**: `http://localhost:3000`
+- **Hardhat**: `http://localhost:8545`
 
 ### **🚀 Flujo de Comunicación:**
 
 1. **Usuario** → Frontend (3002)
 2. **Frontend** → Backend (3001)
-3. **Backend** → API Raíz (3000)
-4. **API Raíz** → Smart Contract
+3. **Backend** → Hardhat (8545)
+4. **Hardhat** → Smart Contract
 
 ---
 
@@ -67,7 +67,7 @@ Backend que actúa como intermediario entre el frontend y la API raíz de blockc
 - **SQLite**: Base de datos embebida, ligera y portable
 - **JWT**: Autenticación y autorización
 - **Swagger**: Documentación interactiva de la API
-- **Axios**: Cliente HTTP para comunicación con API raíz
+- **Ethers.js**: Biblioteca para comunicación directa con Hardhat
 - **Docker**: Contenerización para portabilidad
 - **Docker Compose**: Orquestación de servicios
 
@@ -78,7 +78,7 @@ Backend que actúa como intermediario entre el frontend y la API raíz de blockc
 ### **Patrón Modular:**
 
 ```
-Frontend (3002) → Backend (3001) → API Raíz (3000) → Smart Contract
+Frontend (3002) → Backend (3001) → Hardhat (8545) → Smart Contract
                         ↓                              ↓
                     workRepository ←→ SQLite DB
 ```
@@ -88,7 +88,7 @@ Frontend (3002) → Backend (3001) → API Raíz (3000) → Smart Contract
 - **Controller**: Recibe requests HTTP y coordina respuestas
 - **Service**: Aplica lógica de negocio y validaciones
 - **Repository**: Gestiona interacción con base de datos
-- **BlockchainService**: Comunicación con API raíz
+- **BlockchainService**: Comunicación directa con Hardhat
 
 ### **Flujo de Solicitudes:**
 
@@ -96,7 +96,7 @@ Frontend (3002) → Backend (3001) → API Raíz (3000) → Smart Contract
 2. **Controller** recibe y direcciona al Service
 3. **Service** aplica lógica de negocio y llama Repository/BlockchainService
 4. **Repository** ejecuta operaciones en SQLite
-5. **BlockchainService** comunica con API raíz
+5. **BlockchainService** comunica directamente con Hardhat
 6. **Respuesta** viaja de vuelta por las capas
 
 ---
@@ -199,9 +199,9 @@ Content-Type: application/json
 
 ### **Blockchain Service**
 
-- **Conexión automática** a API raíz al iniciar
-- **Manejo de errores** si API raíz no está disponible
-- **Transacciones seguras** con Axios HTTP
+- **Conexión automática** a Hardhat al iniciar
+- **Manejo de errores** si Hardhat no está disponible
+- **Transacciones seguras** con Ethers.js
 - **Eventos de blockchain** para tracking
 
 ### **API REST**
@@ -304,8 +304,10 @@ docker-compose up
 PORT=3001
 JWT_SECRET=tu_jwt_secret_super_secreto_aqui
 
-# Configuración de API de Blockchain (raíz)
-BLOCKCHAIN_API_URL=http://localhost:3000
+# Configuración de Hardhat
+BLOCKCHAIN_RPC_URL=http://localhost:8545
+WORKESCROW_CONTRACT_ADDRESS=0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512
+USDC_CONTRACT_ADDRESS=0x5FbDB2315678afecb367f032d93F642f64180aa3
 ```
 
 ### **Frontend (.env)**
@@ -314,12 +316,12 @@ REACT_APP_BACKEND_URL=http://localhost:3001
 REACT_APP_API_URL=http://localhost:3001
 ```
 
-### **API Raíz (.env)**
+### **Hardhat (.env)**
 ```env
-PORT=3000
+# Configuración de Hardhat (ya incluida en el proyecto)
 BLOCKCHAIN_RPC_URL=http://localhost:8545
-WORKESCROW_CONTRACT_ADDRESS=0x...
-USDC_CONTRACT_ADDRESS=0x...
+WORKESCROW_CONTRACT_ADDRESS=0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512
+USDC_CONTRACT_ADDRESS=0x5FbDB2315678afecb367f032d93F642f64180aa3
 ```
 
 ### **Configuración para Hardhat Local**
@@ -345,13 +347,12 @@ USDC_CONTRACT_ADDRESS=0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238
 ```yaml
 version: '3.8'
 services:
-  # API Raíz - Blockchain
-  api-blockchain:
-    build: ./api-raiz
+  # Hardhat - Blockchain
+  hardhat:
+    build: ./blockchain
     ports:
-      - "3000:3000"
+      - "8545:8545"
     environment:
-      - PORT=3000
       - BLOCKCHAIN_RPC_URL=http://localhost:8545
 
   # Backend
@@ -361,9 +362,9 @@ services:
       - "3001:3001"
     environment:
       - PORT=3001
-      - BLOCKCHAIN_API_URL=http://api-blockchain:3000
+      - BLOCKCHAIN_RPC_URL=http://hardhat:8545
     depends_on:
-      - api-blockchain
+      - hardhat
 
   # Frontend
   frontend:
@@ -493,9 +494,9 @@ POST /works/1/accept
 
 ## 🧪 **Testing de Arquitectura**
 
-### **1. Verificar API Raíz (3000)**
+### **1. Verificar Hardhat (8545)**
 ```bash
-curl http://localhost:3000/health
+curl -X POST http://localhost:8545 -H "Content-Type: application/json" -d '{"jsonrpc":"2.0","method":"eth_chainId","params":[],"id":1}'
 ```
 
 ### **2. Verificar Backend (3001)**
@@ -511,7 +512,7 @@ curl http://localhost:3002
 ### **4. Verificar Conectividad:**
 ```bash
 # Verificar que todos los puertos estén abiertos
-netstat -an | grep :3000
+netstat -an | grep :8545
 netstat -an | grep :3001
 netstat -an | grep :3002
 ```
@@ -557,7 +558,7 @@ backend/
 │   │   └── userController.js   # Endpoints de usuarios
 │   ├── services/
 │   │   ├── workService.js       # Lógica de negocio
-│   │   └── blockchainService.js # Comunicación con API raíz
+│   │   └── blockchainService.js # Comunicación directa con Hardhat
 │   ├── repositories/
 │   │   └── workRepository.js    # Acceso a base de datos
 │   ├── middleware/
@@ -578,8 +579,8 @@ backend/
 
 ## 🎯 **Orden de Inicio**
 
-1. **API Raíz (3000)** - Primero (blockchain)
-2. **Backend (3001)** - Segundo (depende de API Raíz)
+1. **Hardhat (8545)** - Primero (blockchain)
+2. **Backend (3001)** - Segundo (depende de Hardhat)
 3. **Frontend (3002)** - Tercero (depende de Backend)
 
 ---
@@ -587,10 +588,10 @@ backend/
 ## 📋 **Checklist de Verificación**
 
 ### **✅ Arquitectura**
-- [ ] **API Raíz** funcionando en puerto 3000
+- [ ] **Hardhat** funcionando en puerto 8545
 - [ ] **Backend** funcionando en puerto 3001
 - [ ] **Frontend** funcionando en puerto 3002
-- [ ] **Comunicación** Backend → API Raíz
+- [ ] **Comunicación** Backend → Hardhat
 - [ ] **Comunicación** Frontend → Backend
 
 ### **✅ Autenticación**
@@ -614,10 +615,10 @@ backend/
 ### **✅ Health Checks**
 - [ ] Health check básico
 - [ ] Health check detallado
-- [ ] Conectividad con API raíz
+- [ ] Conectividad con Hardhat
 
 ### **✅ Blockchain Integration**
-- [ ] Conexión con API raíz
+- [ ] Conexión con Hardhat
 - [ ] Transacciones funcionando
 - [ ] Manejo de errores
 - [ ] Sincronización de datos
