@@ -103,6 +103,10 @@ router.get('/', (req, res) => { // Propio para pruebas
  *                 type: string
  *                 description: Contraseña del usuario
  *                 example: 'hashed_pass3'
+ *               wallet_address:
+ *                 type: string
+ *                 description: Dirección de wallet del usuario (opcional)
+ *                 example: '0x5B38Da6a701c568545dCfcB03FcB875f56beddC4'
  *     responses:
  *       200:
  *         description: Usuario registrado exitosamente
@@ -125,10 +129,10 @@ router.get('/', (req, res) => { // Propio para pruebas
  *               $ref: '#/components/schemas/Error'
  */
 router.post('/register', (req, res) => {
-  const { name, email, password } = req.body;
-  userService.addUser(name, email, password, (err, user) => {
+  const { name, email, password, wallet_address } = req.body;
+  userService.addUser(name, email, password, wallet_address, (err, user) => {
     if (err) return res.status(400).json({ error: err.message });
-    res.json({ name: user.name, email: user.email });
+    res.json({ name: user.name, email: user.email, wallet_address: user.wallet_address });
   });
 });
 

@@ -287,7 +287,7 @@
           }
         },
         {
-          "name": "Crear Trabajo",
+          "name": "Crear Trabajo (Sin Worker)",
           "request": {
             "method": "POST",
             "header": [
@@ -302,7 +302,32 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"clientId\": \"{{aliceWallet}}\",\n  \"worker\": \"{{bobWallet}}\",\n  \"amount\": 150.75,\n  \"title\": \"Desarrollar API REST\",\n  \"description\": \"API REST con Node.js y Express para e-commerce\",\n  \"deadline\": 1704153600\n}"
+              "raw": "{\n  \"clientId\": \"{{aliceWallet}}\",\n  \"amount\": 500.00,\n  \"title\": \"Desarrollo de Landing Page\",\n  \"description\": \"Crear una landing page moderna para una startup de fintech con diseño responsive y animaciones\",\n  \"deadline\": \"2025-01-15T23:59:59.000Z\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/works",
+              "host": ["{{baseUrl}}"],
+              "path": ["works"]
+            }
+          }
+        },
+        {
+          "name": "Crear Trabajo (Con Worker)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"clientId\": \"{{aliceWallet}}\",\n  \"worker\": \"{{bobWallet}}\",\n  \"amount\": 750.00,\n  \"title\": \"Desarrollo de App Móvil\",\n  \"description\": \"Crear una aplicación móvil para iOS y Android con React Native\",\n  \"deadline\": \"2025-01-15T23:59:59.000Z\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/works",
@@ -330,9 +355,9 @@
               "raw": "{\n  \"workerAddress\": \"{{bobWallet}}\"\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/works/1/accept",
+              "raw": "{{baseUrl}}/works/7/accept",
               "host": ["{{baseUrl}}"],
-              "path": ["works", "1", "accept"]
+              "path": ["works", "7", "accept"]
             }
           }
         },
@@ -352,12 +377,12 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"deliveryData\": \"https://github.com/usuario/proyecto-completado\",\n  \"workerAddress\": \"{{bobWallet}}\"\n}"
+              "raw": "{\n  \"deliveryData\": \"https://github.com/bob/app-movil-react-native\",\n  \"workerAddress\": \"{{bobWallet}}\"\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/works/2/submit",
+              "raw": "{{baseUrl}}/works/7/submit",
               "host": ["{{baseUrl}}"],
-              "path": ["works", "2", "submit"]
+              "path": ["works", "7", "submit"]
             }
           }
         },
@@ -377,12 +402,12 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"clientAddress\": \"{{charlieWallet}}\"\n}"
+              "raw": "{\n  \"clientAddress\": \"{{aliceWallet}}\"\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/works/3/approve",
+              "raw": "{{baseUrl}}/works/7/approve",
               "host": ["{{baseUrl}}"],
-              "path": ["works", "3", "approve"]
+              "path": ["works", "7", "approve"]
             }
           }
         },
@@ -405,9 +430,9 @@
               "raw": "{\n  \"clientAddress\": \"{{aliceWallet}}\"\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/works/5/cancel",
+              "raw": "{{baseUrl}}/works/6/cancel",
               "host": ["{{baseUrl}}"],
-              "path": ["works", "5", "cancel"]
+              "path": ["works", "6", "cancel"]
             }
           }
         }
@@ -482,7 +507,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"clientId\": \"{{aliceWallet}}\",\n  \"worker\": \"{{bobWallet}}\",\n  \"amount\": 500.00,\n  \"title\": \"Desarrollar DApp\",\n  \"description\": \"Aplicación descentralizada para gestión de documentos\",\n  \"deadline\": 1704240000\n}"
+              "raw": "{\n  \"clientId\": \"{{aliceWallet}}\",\n  \"worker\": \"{{bobWallet}}\",\n  \"amount\": 750.00,\n  \"title\": \"Desarrollo de App Móvil\",\n  \"description\": \"Crear una aplicación móvil para iOS y Android con React Native\",\n  \"deadline\": \"2025-01-15T23:59:59.000Z\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/works",
@@ -510,9 +535,9 @@
               "raw": "{\n  \"workerAddress\": \"{{bobWallet}}\"\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/works/6/accept",
+              "raw": "{{baseUrl}}/works/7/accept",
               "host": ["{{baseUrl}}"],
-              "path": ["works", "6", "accept"]
+              "path": ["works", "7", "accept"]
             }
           }
         },
@@ -532,12 +557,12 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"deliveryData\": \"https://github.com/usuario/dapp-completada\",\n  \"workerAddress\": \"{{bobWallet}}\"\n}"
+              "raw": "{\n  \"deliveryData\": \"https://github.com/bob/app-movil-react-native\",\n  \"workerAddress\": \"{{bobWallet}}\"\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/works/6/submit",
+              "raw": "{{baseUrl}}/works/7/submit",
               "host": ["{{baseUrl}}"],
-              "path": ["works", "6", "submit"]
+              "path": ["works", "7", "submit"]
             }
           }
         },
@@ -560,9 +585,34 @@
               "raw": "{\n  \"clientAddress\": \"{{aliceWallet}}\"\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/works/6/approve",
+              "raw": "{{baseUrl}}/works/7/approve",
               "host": ["{{baseUrl}}"],
-              "path": ["works", "6", "approve"]
+              "path": ["works", "7", "approve"]
+            }
+          }
+        },
+        {
+          "name": "5. Cancelar Trabajo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"clientAddress\": \"{{aliceWallet}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/works/6/cancel",
+              "host": ["{{baseUrl}}"],
+              "path": ["works", "6", "cancel"]
             }
           }
         }

@@ -77,9 +77,10 @@ const authMiddleware = require('../middleware/authMiddleware');
  *           description: Descripción del trabajo
  *           example: "Sitio web con React y TypeScript"
  *         deadline:
- *           type: integer
- *           description: Timestamp límite
- *           example: 1704067200
+ *           type: string
+ *           format: date-time
+ *           description: Fecha límite en formato ISO string
+ *           example: "2025-01-15T23:59:59.000Z"
  *     AcceptWorkRequest:
  *       type: object
  *       required:
@@ -185,7 +186,7 @@ const authMiddleware = require('../middleware/authMiddleware');
  *             amount: 150.75
  *             title: "Desarrollar API REST"
  *             description: "API REST con Node.js y Express para e-commerce"
- *             deadline: 1704153600
+ *             deadline: "2025-01-15T23:59:59.000Z"
  *     responses:
  *       201:
  *         description: Trabajo creado exitosamente

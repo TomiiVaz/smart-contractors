@@ -10,12 +10,12 @@ const listUsers = (callback) => {
 };
 
 // Registrar un usuario nuevo
-const addUser = (name, email, password, callback) => {
+const addUser = (name, email, password, wallet_address, callback) => {
   if (!name || !email || !password) {
     return callback(new Error("Name, email y password son requeridos"));
   }
 
-  const user = { name, email, password };
+  const user = { name, email, password, wallet_address };
   userRepository.createUser(user, callback);
 };
 
