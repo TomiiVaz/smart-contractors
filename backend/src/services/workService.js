@@ -155,6 +155,11 @@ const acceptWork = async (workId, workerId) => {
       throw new Error('Work is not in Created status');
     }
 
+    // Validar que el worker no sea el mismo que creó el trabajo
+    if (work.clientId === workerId) {
+      throw new Error('Worker cannot accept their own work');
+    }
+
     if (work.workerId && work.workerId !== workerId) {
       throw new Error('Work is assigned to another worker');
     }
