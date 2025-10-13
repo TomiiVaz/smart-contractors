@@ -58,32 +58,40 @@ const createWork = (workData, callback) => {
   const {
     clientId,
     workerId,
+    clientAddress,
+    workerAddress,
     amount,
     title,
     description,
     statusId,
     createdAt,
     deadline,
-    deliveryData
+    deliveryData,
+    blockchainWorkId,
+    transactionHash
   } = workData;
 
   const sql = `
     INSERT INTO works (
-      client_id, worker_id, amount, title, description, 
-      status_id, created_at, deadline, delivery_data
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      client_id, worker_id, client_address, worker_address, amount, title, description, 
+      status_id, created_at, deadline, delivery_data, blockchain_work_id, transaction_hash
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `;
 
   const params = [
     clientId,
     workerId,
+    clientAddress,
+    workerAddress,
     amount,
     title,
     description,
     statusId,
     createdAt,
     deadline,
-    deliveryData
+    deliveryData,
+    blockchainWorkId,
+    transactionHash
   ];
 
   db.run(sql, params, function(err) {

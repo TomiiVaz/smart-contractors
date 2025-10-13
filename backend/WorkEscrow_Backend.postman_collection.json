@@ -302,7 +302,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"worker\": \"{{bobWallet}}\",\n  \"amount\": 150.75,\n  \"title\": \"Desarrollar API REST\",\n  \"description\": \"API REST con Node.js y Express para e-commerce\",\n  \"deadline\": 1704153600\n}"
+              "raw": "{\n  \"clientId\": \"{{aliceWallet}}\",\n  \"worker\": \"{{bobWallet}}\",\n  \"amount\": 150.75,\n  \"title\": \"Desarrollar API REST\",\n  \"description\": \"API REST con Node.js y Express para e-commerce\",\n  \"deadline\": 1704153600\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/works",
@@ -327,7 +327,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"workerId\": 2\n}"
+              "raw": "{\n  \"workerAddress\": \"{{bobWallet}}\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/works/1/accept",
@@ -352,7 +352,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"deliveryData\": \"https://github.com/usuario/proyecto-completado\",\n  \"workerId\": 2\n}"
+              "raw": "{\n  \"deliveryData\": \"https://github.com/usuario/proyecto-completado\",\n  \"workerAddress\": \"{{bobWallet}}\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/works/2/submit",
@@ -377,7 +377,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"clientId\": 3\n}"
+              "raw": "{\n  \"clientAddress\": \"{{charlieWallet}}\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/works/3/approve",
@@ -402,7 +402,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"clientId\": 1\n}"
+              "raw": "{\n  \"clientAddress\": \"{{aliceWallet}}\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/works/5/cancel",
@@ -482,7 +482,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"worker\": \"{{bobWallet}}\",\n  \"amount\": 500.00,\n  \"title\": \"Desarrollar DApp\",\n  \"description\": \"Aplicación descentralizada para gestión de documentos\",\n  \"deadline\": 1704240000\n}"
+              "raw": "{\n  \"clientId\": \"{{aliceWallet}}\",\n  \"worker\": \"{{bobWallet}}\",\n  \"amount\": 500.00,\n  \"title\": \"Desarrollar DApp\",\n  \"description\": \"Aplicación descentralizada para gestión de documentos\",\n  \"deadline\": 1704240000\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/works",
@@ -507,7 +507,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"workerId\": 2\n}"
+              "raw": "{\n  \"workerAddress\": \"{{bobWallet}}\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/works/6/accept",
@@ -532,7 +532,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"deliveryData\": \"https://github.com/usuario/dapp-completada\",\n  \"workerId\": 2\n}"
+              "raw": "{\n  \"deliveryData\": \"https://github.com/usuario/dapp-completada\",\n  \"workerAddress\": \"{{bobWallet}}\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/works/6/submit",
@@ -557,7 +557,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"clientId\": 1\n}"
+              "raw": "{\n  \"clientAddress\": \"{{aliceWallet}}\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/works/6/approve",

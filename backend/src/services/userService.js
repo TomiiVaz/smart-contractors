@@ -59,10 +59,20 @@ const getUserByEmail = (email, callback) => {
   userRepository.findByEmail(email, callback);
 };
 
+// Obtener usuario por wallet address
+const getUserByWalletAddress = (walletAddress, callback) => {
+  if (!walletAddress) {
+    return callback(new Error("Wallet address es requerido"));
+  }
+
+  userRepository.findByWalletAddress(walletAddress, callback);
+};
+
 module.exports = {
   listUsers,
   addUser,
   login,
   getUserById,
-  getUserByEmail
+  getUserByEmail,
+  getUserByWalletAddress
 };

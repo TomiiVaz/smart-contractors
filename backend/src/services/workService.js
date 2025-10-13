@@ -39,7 +39,8 @@ const createWork = async (workData, userId = null) => {
 
     // Crear trabajo en blockchain
     const blockchainResult = await blockchainService.createWork(
-      workData.worker,
+      workData.clientAddress, // Cliente que paga
+      workData.worker,        // Trabajador asignado
       workData.amount,
       workData.title,
       workData.description,
@@ -52,7 +53,7 @@ const createWork = async (workData, userId = null) => {
     const dbWorkData = {
       clientId: userId, // Usuario autenticado
       workerId: null,
-      clientAddress: workData.clientAddress || '0x0000000000000000000000000000000000000000', // TODO: Obtener del token JWT
+      clientAddress: workData.clientAddress || '0x0000000000000000000000000000000000000000',
       workerAddress: workData.worker,
       amount: workData.amount,
       title: workData.title,

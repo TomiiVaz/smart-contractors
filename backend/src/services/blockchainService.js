@@ -34,12 +34,13 @@ class BlockchainService {
   }
 
   // Crear un nuevo trabajo
-  async createWork(workerAddress, amount, title, description, deadline) {
+  async createWork(clientAddress, workerAddress, amount, title, description, deadline) {
     try {
       this.checkAvailability();
 
       const response = await axios.post(`${this.apiUrl}/works`, {
-        worker: workerAddress,
+        client: clientAddress,    // Cliente que paga
+        worker: workerAddress,    // Trabajador asignado
         amount: amount.toString(),
         title,
         description,

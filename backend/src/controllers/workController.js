@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const workService = require('../services/workService');
+const userService = require('../services/userService');
 const authMiddleware = require('../middleware/authMiddleware');
 
 /**
@@ -49,12 +50,17 @@ const authMiddleware = require('../middleware/authMiddleware');
  *     CreateWorkRequest:
  *       type: object
  *       required:
+ *         - clientId
  *         - worker
  *         - amount
  *         - title
  *         - description
  *         - deadline
  *       properties:
+ *         clientId:
+ *           type: string
+ *           description: Dirección de wallet del cliente que crea el trabajo
+ *           example: "0x5B38Da6a701c568545dCfcB03FcB875f56beddC4"
  *         worker:
  *           type: string
  *           description: Dirección de wallet del trabajador
@@ -78,44 +84,44 @@ const authMiddleware = require('../middleware/authMiddleware');
  *     AcceptWorkRequest:
  *       type: object
  *       required:
- *         - workerId
+ *         - workerAddress
  *       properties:
- *         workerId:
- *           type: integer
- *           description: ID del trabajador que acepta el trabajo
- *           example: 2
+ *         workerAddress:
+ *           type: string
+ *           description: Dirección de wallet del trabajador que acepta el trabajo
+ *           example: "0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2"
  *     SubmitWorkRequest:
  *       type: object
  *       required:
  *         - deliveryData
- *         - workerId
+ *         - workerAddress
  *       properties:
  *         deliveryData:
  *           type: string
  *           description: Datos de entrega del trabajo
  *           example: "https://github.com/usuario/proyecto-completado"
- *         workerId:
- *           type: integer
- *           description: ID del trabajador que entrega
- *           example: 2
+ *         workerAddress:
+ *           type: string
+ *           description: Dirección de wallet del trabajador que entrega
+ *           example: "0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2"
  *     ApproveWorkRequest:
  *       type: object
  *       required:
- *         - clientId
+ *         - clientAddress
  *       properties:
- *         clientId:
- *           type: integer
- *           description: ID del cliente que aprueba
- *           example: 1
+ *         clientAddress:
+ *           type: string
+ *           description: Dirección de wallet del cliente que aprueba
+ *           example: "0x5B38Da6a701c568545dCfcB03FcB875f56beddC4"
  *     CancelWorkRequest:
  *       type: object
  *       required:
- *         - clientId
+ *         - clientAddress
  *       properties:
- *         clientId:
- *           type: integer
- *           description: ID del cliente que cancela
- *           example: 1
+ *         clientAddress:
+ *           type: string
+ *           description: Dirección de wallet del cliente que cancela
+ *           example: "0x5B38Da6a701c568545dCfcB03FcB875f56beddC4"
  *     ApproveUSDCRequest:
  *       type: object
  *       required:
@@ -175,6 +181,7 @@ const authMiddleware = require('../middleware/authMiddleware');
  *           schema:
  *             $ref: '#/components/schemas/CreateWorkRequest'
  *           example:
+ *             clientId: "0x5B38Da6a701c568545dCfcB03FcB875f56beddC4"
  *             worker: "0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2"
  *             amount: 150.75
  *             title: "Desarrollar API REST"
@@ -203,6 +210,7 @@ const authMiddleware = require('../middleware/authMiddleware');
 router.post('/', authMiddleware, async (req, res) => {
   try {
     const {
+      clientId,
       worker,
       amount,
       title,
@@ -211,6 +219,9 @@ router.post('/', authMiddleware, async (req, res) => {
     } = req.body;
 
     // Validaciones básicas
+    if (!clientId) {
+      return res.status(400).json({ error: 'Client wallet address is required' });
+    }
     if (!worker) {
       return res.status(400).json({ error: 'Worker address is required' });
     }
@@ -227,13 +238,44 @@ router.post('/', authMiddleware, async (req, res) => {
       return res.status(400).json({ error: 'Deadline is required' });
     }
 
+    // Validar formato de wallet address
+    if (!clientId.match(/^0x[a-fA-F0-9]{40}$/)) {
+      return res.status(400).json({ error: 'Invalid client wallet address format' });
+    }
+    if (!worker.match(/^0x[a-fA-F0-9]{40}$/)) {
+      return res.status(400).json({ error: 'Invalid worker wallet address format' });
+    }
+
+    // Obtener wallet address del usuario autenticado
+    const userId = req.user.id;
+    const user = await new Promise((resolve, reject) => {
+      userService.getUserById(userId, (err, user) => {
+        if (err) return reject(err);
+        resolve(user);
+      });
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    if (!user.wallet_address) {
+      return res.status(400).json({ error: 'User does not have a wallet address configured' });
+    }
+
+    // Validar que el clientId del body coincida con el wallet_address del usuario autenticado
+    if (clientId.toLowerCase() !== user.wallet_address.toLowerCase()) {
+      return res.status(403).json({ error: 'Client wallet address does not match authenticated user' });
+    }
+
     const work = await workService.createWork({
       worker,
       amount: parseFloat(amount),
       title: title.trim(),
       description: description.trim(),
-      deadline: parseInt(deadline)
-    }, req.user.id);
+      deadline: parseInt(deadline),
+      clientAddress: clientId
+    }, userId);
 
     res.status(201).json({
       success: true,
@@ -549,7 +591,7 @@ router.get('/worker/:id', authMiddleware, async (req, res) => {
  *           schema:
  *             $ref: '#/components/schemas/AcceptWorkRequest'
  *           example:
- *             workerId: 2
+ *             workerAddress: "0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2"
  *     responses:
  *       200:
  *         description: Trabajo aceptado exitosamente
@@ -573,17 +615,34 @@ router.get('/worker/:id', authMiddleware, async (req, res) => {
 router.post('/:id/accept', authMiddleware, async (req, res) => {
   try {
     const workId = parseInt(req.params.id);
-    const { workerId } = req.body;
+    const { workerAddress } = req.body;
 
     if (isNaN(workId)) {
       return res.status(400).json({ error: 'Invalid work ID' });
     }
 
-    if (!workerId) {
-      return res.status(400).json({ error: 'Worker ID is required' });
+    if (!workerAddress) {
+      return res.status(400).json({ error: 'Worker address is required' });
     }
 
-    const work = await workService.acceptWork(workId, parseInt(workerId));
+    // Validar formato de wallet address
+    if (!workerAddress.match(/^0x[a-fA-F0-9]{40}$/)) {
+      return res.status(400).json({ error: 'Invalid worker wallet address format' });
+    }
+
+    // Obtener userId del workerAddress
+    const worker = await new Promise((resolve, reject) => {
+      userService.getUserByWalletAddress(workerAddress, (err, user) => {
+        if (err) return reject(err);
+        resolve(user);
+      });
+    });
+
+    if (!worker) {
+      return res.status(404).json({ error: 'Worker not found' });
+    }
+
+    const work = await workService.acceptWork(workId, worker.id);
     res.json({
       success: true,
       message: 'Work accepted successfully',
@@ -624,7 +683,7 @@ router.post('/:id/accept', authMiddleware, async (req, res) => {
  *             $ref: '#/components/schemas/SubmitWorkRequest'
  *           example:
  *             deliveryData: "https://github.com/usuario/proyecto-completado"
- *             workerId: 2
+ *             workerAddress: "0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2"
  *     responses:
  *       200:
  *         description: Trabajo entregado exitosamente
@@ -648,7 +707,7 @@ router.post('/:id/accept', authMiddleware, async (req, res) => {
 router.post('/:id/submit', authMiddleware, async (req, res) => {
   try {
     const workId = parseInt(req.params.id);
-    const { deliveryData, workerId } = req.body;
+    const { deliveryData, workerAddress } = req.body;
 
     if (isNaN(workId)) {
       return res.status(400).json({ error: 'Invalid work ID' });
@@ -658,11 +717,28 @@ router.post('/:id/submit', authMiddleware, async (req, res) => {
       return res.status(400).json({ error: 'Delivery data is required' });
     }
 
-    if (!workerId) {
-      return res.status(400).json({ error: 'Worker ID is required' });
+    if (!workerAddress) {
+      return res.status(400).json({ error: 'Worker address is required' });
     }
 
-    const work = await workService.submitWork(workId, deliveryData, parseInt(workerId));
+    // Validar formato de wallet address
+    if (!workerAddress.match(/^0x[a-fA-F0-9]{40}$/)) {
+      return res.status(400).json({ error: 'Invalid worker wallet address format' });
+    }
+
+    // Obtener userId del workerAddress
+    const worker = await new Promise((resolve, reject) => {
+      userService.getUserByWalletAddress(workerAddress, (err, user) => {
+        if (err) return reject(err);
+        resolve(user);
+      });
+    });
+
+    if (!worker) {
+      return res.status(404).json({ error: 'Worker not found' });
+    }
+
+    const work = await workService.submitWork(workId, deliveryData, worker.id);
     res.json({
       success: true,
       message: 'Work submitted successfully',
@@ -702,7 +778,7 @@ router.post('/:id/submit', authMiddleware, async (req, res) => {
  *           schema:
  *             $ref: '#/components/schemas/ApproveWorkRequest'
  *           example:
- *             clientId: 1
+ *             clientAddress: "0x5B38Da6a701c568545dCfcB03FcB875f56beddC4"
  *     responses:
  *       200:
  *         description: Trabajo aprobado exitosamente
@@ -726,17 +802,34 @@ router.post('/:id/submit', authMiddleware, async (req, res) => {
 router.post('/:id/approve', authMiddleware, async (req, res) => {
   try {
     const workId = parseInt(req.params.id);
-    const { clientId } = req.body;
+    const { clientAddress } = req.body;
 
     if (isNaN(workId)) {
       return res.status(400).json({ error: 'Invalid work ID' });
     }
 
-    if (!clientId) {
-      return res.status(400).json({ error: 'Client ID is required' });
+    if (!clientAddress) {
+      return res.status(400).json({ error: 'Client address is required' });
     }
 
-    const work = await workService.approveWork(workId, parseInt(clientId));
+    // Validar formato de wallet address
+    if (!clientAddress.match(/^0x[a-fA-F0-9]{40}$/)) {
+      return res.status(400).json({ error: 'Invalid client wallet address format' });
+    }
+
+    // Obtener userId del clientAddress
+    const client = await new Promise((resolve, reject) => {
+      userService.getUserByWalletAddress(clientAddress, (err, user) => {
+        if (err) return reject(err);
+        resolve(user);
+      });
+    });
+
+    if (!client) {
+      return res.status(404).json({ error: 'Client not found' });
+    }
+
+    const work = await workService.approveWork(workId, client.id);
     res.json({
       success: true,
       message: 'Work approved successfully',
@@ -776,7 +869,7 @@ router.post('/:id/approve', authMiddleware, async (req, res) => {
  *           schema:
  *             $ref: '#/components/schemas/CancelWorkRequest'
  *           example:
- *             clientId: 1
+ *             clientAddress: "0x5B38Da6a701c568545dCfcB03FcB875f56beddC4"
  *     responses:
  *       200:
  *         description: Trabajo cancelado exitosamente
@@ -800,17 +893,34 @@ router.post('/:id/approve', authMiddleware, async (req, res) => {
 router.post('/:id/cancel', authMiddleware, async (req, res) => {
   try {
     const workId = parseInt(req.params.id);
-    const { clientId } = req.body;
+    const { clientAddress } = req.body;
 
     if (isNaN(workId)) {
       return res.status(400).json({ error: 'Invalid work ID' });
     }
 
-    if (!clientId) {
-      return res.status(400).json({ error: 'Client ID is required' });
+    if (!clientAddress) {
+      return res.status(400).json({ error: 'Client address is required' });
     }
 
-    const work = await workService.cancelWork(workId, parseInt(clientId));
+    // Validar formato de wallet address
+    if (!clientAddress.match(/^0x[a-fA-F0-9]{40}$/)) {
+      return res.status(400).json({ error: 'Invalid client wallet address format' });
+    }
+
+    // Obtener userId del clientAddress
+    const client = await new Promise((resolve, reject) => {
+      userService.getUserByWalletAddress(clientAddress, (err, user) => {
+        if (err) return reject(err);
+        resolve(user);
+      });
+    });
+
+    if (!client) {
+      return res.status(404).json({ error: 'Client not found' });
+    }
+
+    const work = await workService.cancelWork(workId, client.id);
     res.json({
       success: true,
       message: 'Work cancelled successfully',

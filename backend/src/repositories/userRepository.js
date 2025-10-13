@@ -43,9 +43,20 @@ const findById = (id, callback) => {
   });
 };
 
+// Buscar usuario por wallet address
+const findByWalletAddress = (walletAddress, callback) => {
+  db.get("SELECT * FROM users WHERE wallet_address = ?", [walletAddress], (err, row) => {
+    if (err) return callback(err);
+    if (!row) return callback(null, null);
+    const user = new User(row.id, row.name, row.email, row.password, row.wallet_address);
+    callback(null, user);
+  });
+};
+
 module.exports = {
   getAllUsers,
   createUser,
   findByEmail,
-  findById
+  findById,
+  findByWalletAddress
 };

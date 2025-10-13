@@ -5,17 +5,23 @@ class Work {
     id,
     clientId,
     workerId,
+    clientAddress,
+    workerAddress,
     amount,
     title,
     description,
     statusId,
     createdAt,
     deadline,
-    deliveryData
+    deliveryData,
+    blockchainWorkId,
+    transactionHash
   ) {
     this.id = id;
     this.clientId = clientId;
     this.workerId = workerId;
+    this.clientAddress = clientAddress;
+    this.workerAddress = workerAddress;
     this.amount = amount; // en centavos
     this.title = title;
     this.description = description;
@@ -23,6 +29,8 @@ class Work {
     this.createdAt = createdAt; // epoch
     this.deadline = deadline;   // epoch
     this.deliveryData = deliveryData;
+    this.blockchainWorkId = blockchainWorkId;
+    this.transactionHash = transactionHash;
   }
 
   // Método estático para crear instancia desde la base de datos
@@ -31,13 +39,17 @@ class Work {
       row.id,
       row.client_id,
       row.worker_id,
+      row.client_address,
+      row.worker_address,
       row.amount,
       row.title,
       row.description,
       row.status_id,
       row.created_at,
       row.deadline,
-      row.delivery_data
+      row.delivery_data,
+      row.blockchain_work_id,
+      row.transaction_hash
     );
   }
 
@@ -52,6 +64,8 @@ class Work {
       id: this.id,
       clientId: this.clientId,
       workerId: this.workerId,
+      clientAddress: this.clientAddress,
+      workerAddress: this.workerAddress,
       amount: this.amount,
       title: this.title,
       description: this.description,
@@ -59,7 +73,9 @@ class Work {
       status: this.getStatusName(),
       createdAt: this.createdAt,
       deadline: this.deadline,
-      deliveryData: this.deliveryData
+      deliveryData: this.deliveryData,
+      blockchainWorkId: this.blockchainWorkId,
+      transactionHash: this.transactionHash
     };
   }
 }
