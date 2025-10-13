@@ -51,7 +51,6 @@ const authMiddleware = require('../middleware/authMiddleware');
  *       type: object
  *       required:
  *         - clientId
- *         - worker
  *         - amount
  *         - title
  *         - description
@@ -63,7 +62,7 @@ const authMiddleware = require('../middleware/authMiddleware');
  *           example: "0x5B38Da6a701c568545dCfcB03FcB875f56beddC4"
  *         worker:
  *           type: string
- *           description: Dirección de wallet del trabajador
+ *           description: Dirección de wallet del trabajador (opcional)
  *           example: "0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2"
  *         amount:
  *           type: number
@@ -222,8 +221,9 @@ router.post('/', authMiddleware, async (req, res) => {
     if (!clientId) {
       return res.status(400).json({ error: 'Client wallet address is required' });
     }
-    if (!worker) {
-      return res.status(400).json({ error: 'Worker address is required' });
+    // Worker es opcional, pero si se proporciona debe tener formato válido
+    if (worker && typeof worker === 'string' && !worker.match(/^0x[a-fA-F0-9]{40}$/)) {
+      return res.status(400).json({ error: 'Invalid worker wallet address format' });
     }
     if (!amount || amount <= 0) {
       return res.status(400).json({ error: 'Amount must be greater than 0' });
@@ -239,10 +239,10 @@ router.post('/', authMiddleware, async (req, res) => {
     }
 
     // Validar formato de wallet address
-    if (!clientId.match(/^0x[a-fA-F0-9]{40}$/)) {
+    if (!clientId || !clientId.match(/^0x[a-fA-F0-9]{40}$/)) {
       return res.status(400).json({ error: 'Invalid client wallet address format' });
     }
-    if (!worker.match(/^0x[a-fA-F0-9]{40}$/)) {
+    if (worker && typeof worker === 'string' && !worker.match(/^0x[a-fA-F0-9]{40}$/)) {
       return res.status(400).json({ error: 'Invalid worker wallet address format' });
     }
 
@@ -273,7 +273,7 @@ router.post('/', authMiddleware, async (req, res) => {
       amount: parseFloat(amount),
       title: title.trim(),
       description: description.trim(),
-      deadline: parseInt(deadline),
+      deadline: Math.floor(new Date(deadline).getTime() / 1000),
       clientAddress: clientId
     }, userId);
 

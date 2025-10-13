@@ -14,8 +14,9 @@ blockchainService.initialize()
 const createWork = async (workData, userId = null) => {
   try {
     // Validaciones
-    if (!workData.worker) {
-      throw new Error('Worker address is required');
+    // Worker es opcional, pero si se proporciona debe tener formato válido
+    if (workData.worker && typeof workData.worker === 'string' && !workData.worker.match(/^0x[a-fA-F0-9]{40}$/)) {
+      throw new Error('Invalid worker wallet address format');
     }
     if (!workData.amount || workData.amount <= 0) {
       throw new Error('Amount must be greater than 0');
@@ -54,7 +55,7 @@ const createWork = async (workData, userId = null) => {
       clientId: userId, // Usuario autenticado
       workerId: null,
       clientAddress: workData.clientAddress || '0x0000000000000000000000000000000000000000',
-      workerAddress: workData.worker,
+      workerAddress: workData.worker || null, // Puede ser null si no se asigna worker
       amount: workData.amount,
       title: workData.title,
       description: workData.description,
