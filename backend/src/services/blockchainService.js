@@ -5,7 +5,9 @@ class BlockchainService {
     this.rpcUrl = process.env.BLOCKCHAIN_RPC_URL || 'http://localhost:8545';
     this.workEscrowAddress = process.env.WORKESCROW_CONTRACT_ADDRESS || '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512';
     this.usdcAddress = process.env.USDC_CONTRACT_ADDRESS || '0x5FbDB2315678afecb367f032d93F642f64180aa3';
+    this.privateKey = process.env.BACKEND_PRIVATE_KEY || '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80'; // Hardhat Account #0
     this.provider = null;
+    this.signer = null;
     this.workEscrowContract = null;
     this.usdcContract = null;
     this.isConnected = false;
@@ -16,21 +18,25 @@ class BlockchainService {
       // Conectar al nodo Hardhat
       this.provider = new ethers.JsonRpcProvider(this.rpcUrl);
       
+      // Crear signer con la wallet privada
+      this.signer = new ethers.Wallet(this.privateKey, this.provider);
+      
       // Verificar conexión
       const network = await this.provider.getNetwork();
       console.log(`✅ Conectado a red: ${network.name} (Chain ID: ${network.chainId})`);
+      console.log(`🔑 Backend wallet: ${this.signer.address}`);
       
-      // Crear instancias de contratos
+      // Crear instancias de contratos con signer para transacciones
       this.workEscrowContract = new ethers.Contract(
         this.workEscrowAddress,
         this.getWorkEscrowABI(),
-        this.provider
+        this.signer
       );
       
       this.usdcContract = new ethers.Contract(
         this.usdcAddress,
         this.getUSDCABI(),
-        this.provider
+        this.signer
       );
       
       this.isConnected = true;
@@ -95,9 +101,12 @@ class BlockchainService {
       // Convertir amount a wei (6 decimales para USDC)
       const amountInWei = ethers.parseUnits(amount.toString(), 6);
       
+      // Si workerAddress es null, usar address cero
+      const workerAddr = workerAddress || '0x0000000000000000000000000000000000000000';
+      
       // Crear transacción
       const tx = await this.workEscrowContract.createWork(
-        workerAddress,
+        workerAddr,
         amountInWei,
         title,
         description,
